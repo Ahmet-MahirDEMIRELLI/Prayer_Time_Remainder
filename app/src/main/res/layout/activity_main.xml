@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/black"
+        android:id="@+id/linearLayout">
+
+        <TextView
+            android:id="@+id/location_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginTop="30dp"
+            android:text="Ayvalık"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            android:background="@drawable/border"
+            android:focusable="false"
+            android:clickable="true"/>
+        <TextView
+            android:id="@+id/language_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginTop="-45dp"
+            android:layout_marginStart="350dp"
+            android:text="TR"
+            android:textColor="#E31111"
+            android:textSize="15sp"
+            android:focusable="false"
+            android:clickable="true"/>
+        <Switch
+            android:id="@+id/language_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="English"
+            android:textOn="Türkçe"
+            android:checked="false"
+            android:layout_marginTop="-20dp"
+            android:layout_marginStart="350dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+
+
+    </LinearLayout>
+</RelativeLayout>
