@@ -5,6 +5,8 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
+import android.provider.DocumentsContract
 import android.util.Log
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -18,6 +20,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -84,6 +90,7 @@ class AddNewLocation : AppCompatActivity() {
                         }
                         popUpMessage("w",name+ "\n"+url)
                         addLocationToFile(name,url)
+                        getPrayerTimes(name,url)
                     } catch (e: Exception) {
                         // Hata işle
                     }
@@ -92,16 +99,102 @@ class AddNewLocation : AppCompatActivity() {
                 Log.e("MainActivity", "URL is null")
             }
         }
-
     }
-    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
-    override fun onBackPressed() {
-        super.onBackPressed()
-        val intent = Intent(this, MainActivity::class.java).apply {
-            putExtra("language", language)
+    private fun getPrayerTimes(name: String, url: String){
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val prayerTimes = fetchPrayerTimes(url)
+                if (prayerTimes != null) {
+                    Log.d("FetchPrayerTimes", "Prayer Times: $prayerTimes")
+                    createCSVFile(prayerTimes, "$name.csv")
+                } else {
+                    Log.e("FetchPrayerTimes", "Prayer times could not be fetched.")
+                }
+            } catch (e: Exception) {
+                Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+            }
         }
-        startActivity(intent)
-        finish()
+    }
+    private fun createCSVFile(prayerTimes: String, fileName: String) {
+        val csvFile = File(this.filesDir, fileName)
+        if (csvFile.exists()) {
+            csvFile.delete()
+        }
+        csvFile.createNewFile()
+
+        val lines = prayerTimes.split("\n")
+        for (line in lines) {
+            if (line.isNotBlank()) {  // Check if the line is not blank
+                val parts = line.split(": ")
+                if (parts.size > 1) {
+                    val tmp = parts[0].trim().split(" ")
+                    val date = formatDate(tmp[0] + " " + tmp[1] + " " + tmp[2])
+                    val temp = parts[1].split(", ")
+                    val times = temp[1] + "," + temp[3] + "," + temp[4] + "," + temp[5] + "," + temp[6]
+                    val csvLine = "$date,$times\n"
+                    csvFile.appendText(csvLine)
+                }
+            }
+        }
+        doToast("file created")
+    }
+    private fun formatDate(date: String): String{
+        val parts = date.split(" ")
+        var mounth: String = when(parts[1]) {
+            "Ocak" -> "01"
+            "Şubat" -> "02"
+            "Mart" -> "03"
+            "Nisan" -> "04"
+            "Mayıs" -> "05"
+            "Haziran" -> "06"
+            "Temmuz" -> "07"
+            "Ağustos" -> "08"
+            "Eylül" -> "09"
+            "Ekim" -> "10"
+            "Kasım" -> "11"
+            "Aralık" -> "12"
+            else -> ""
+        }
+        return parts[2] + "-" + mounth + "-" + parts[0]
+    }
+    private suspend fun fetchPrayerTimes(url: String): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val document: Document = Jsoup.connect(url).get()
+                val body = document.body()
+
+                // JSoup ile sayfa içeriğini parse et
+                val parsedDoc = Jsoup.parse(body.toString())
+
+                // Cevabı parse etme
+                val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
+                Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
+
+                val rows = prayerTimesElement?.select("tr")
+                val prayerTimesStringBuilder = StringBuilder()
+
+                rows?.forEach { row ->
+                    val columns = row.select("td")
+                    columns.forEachIndexed { index, column ->
+                        if (index == 0) {
+                            prayerTimesStringBuilder.append("${column.text()}: ")
+                        } else if (index == columns.size - 1) {
+                            prayerTimesStringBuilder.append(column.text())
+                        } else {
+                            prayerTimesStringBuilder.append("${column.text()}, ")
+                        }
+                    }
+                    prayerTimesStringBuilder.append("\n")
+                }
+
+                val prayerTimesString = prayerTimesStringBuilder.toString()
+
+                return@withContext prayerTimesString
+            } catch (e: Exception) {
+                Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+                return@withContext null
+            }
+        }
     }
     private fun addLocationToFile(name: String, url: String) {
         val file = File(this.filesDir, "myLocations.csv")
@@ -113,6 +206,26 @@ class AddNewLocation : AppCompatActivity() {
             val newContent = "$name,$url\n" + currentContent
             file.writeText(newContent)
         }
+    }
+    private fun handleUrl(url: String) {
+        // URL'i işleme fonksiyonu
+        // Burada URL ile istediğiniz işlemleri yapabilirsiniz
+        // Örneğin, URL'i parse edebilir veya farklı bir API'ye gönderebilirsiniz
+        // Şu anda sadece loglama yapıyoruz
+        Log.d("MainActivity", "Handling URL: $url")
+    }
+    private fun popUpMessage(title: String, message: String) {
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setTitle(title)
+        alertDialogBuilder.setMessage(message)
+        alertDialogBuilder.setPositiveButton("Okay") { dialog, which ->
+            dialog.dismiss()
+        }
+        val alertDialog = alertDialogBuilder.create()
+        alertDialog.show()
+    }
+    private fun doToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
     private suspend fun getLocationNameEN(context: Context): String {
         return suspendCancellableCoroutine { continuation ->
@@ -174,135 +287,18 @@ class AddNewLocation : AppCompatActivity() {
             dialog.show()
         }
     }
-    private fun handleUrl(url: String) {
-        // URL'i işleme fonksiyonu
-        // Burada URL ile istediğiniz işlemleri yapabilirsiniz
-        // Örneğin, URL'i parse edebilir veya farklı bir API'ye gönderebilirsiniz
-        // Şu anda sadece loglama yapıyoruz
-        Log.d("MainActivity", "Handling URL: $url")
-    }
-    private fun popUpMessage(title: String, message: String) {
-        val alertDialogBuilder = AlertDialog.Builder(this)
-        alertDialogBuilder.setTitle(title)
-        alertDialogBuilder.setMessage(message)
-        alertDialogBuilder.setPositiveButton("Okay") { dialog, which ->
-            dialog.dismiss()
+    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtra("language", language)
         }
-        val alertDialog = alertDialogBuilder.create()
-        alertDialog.show()
-    }
-    private fun doToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        startActivity(intent)
+        finish()
     }
 }
 
 
-/*private suspend fun fetchPrayerTimes(country: String, city: String, district: String): String? {
-        return withContext(Dispatchers.IO) {
-            val url = "https://namazvakitleri.diyanet.gov.tr/tr-TR"
-
-            try {
-                // İlk olarak URL'ye bağlanma işlemi
-                Log.d("FetchPrayerTimes", "Connecting to URL: $url")
-                val document: Document = Jsoup.connect(url).get()
-                Log.d("FetchPrayerTimes", "Connected successfully.")
-
-                // Form verilerini hazırlama
-                val formData = hashMapOf(
-                    "country" to country,
-                    "state" to city,
-                    "stateRegion" to district
-                )
-
-                // Form verilerini loglama
-                Log.d("FetchPrayerTimes", "Form Data: $formData")
-
-                // Post isteği gönderme
-                val response = Jsoup.connect(url)
-                    .data(formData)
-                    .method(org.jsoup.Connection.Method.POST)
-                    .execute()
-
-                // Post isteğini loglama
-                Log.d("FetchPrayerTimes", "POST request sent.")
-
-
-                val body = response.body()
-
-                // JSoup ile sayfa içeriğini parse et
-                val parsedDoc = Jsoup.parse(body)
-
-                // Cevabı parse etme
-                val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
-                Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
-
-                val rows = prayerTimesElement?.select("tr")
-                val prayerTimesStringBuilder = StringBuilder()
-
-                rows?.forEach { row ->
-                    val columns = row.select("td")
-                    columns.forEachIndexed { index, column ->
-                        if (index == 0) {
-                            prayerTimesStringBuilder.append("${column.text()}: ")
-                        } else if (index == columns.size - 1) {
-                            prayerTimesStringBuilder.append(column.text())
-                        } else {
-                            prayerTimesStringBuilder.append("${column.text()}, ")
-                        }
-                    }
-                    prayerTimesStringBuilder.append("\n")
-                }
-
-                val prayerTimesString = prayerTimesStringBuilder.toString()
-
-                // İşlenmiş veriyi loglama
-                Log.d("FetchPrayerTimes", "Prayer Times String: $prayerTimesString")
-
-                return@withContext prayerTimesString
-            } catch (e: Exception) {
-                Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
-                return@withContext null
-            }
-        }
-    }
 
 
 
-
-    private fun displayPrayerTimes(prayerTimes: String?) {
-        prayerTimes?.let { times ->
-            val csvFileName = "prayer_times.csv"
-            val csvContent = StringBuilder()
-            csvContent.append("Tarih,İmsak,Güneş,Öğle,İkindi,Akşam,Yatsı\n") // .csv dosyasının başlığını oluştur
-
-            times.lines().forEach { line ->
-                val prayerTimesArray = line.split(", ")
-                if (prayerTimesArray.size == 8) {
-                    csvContent.append("${prayerTimesArray[0]},${prayerTimesArray[2]},${prayerTimesArray[3]},${prayerTimesArray[4]},${prayerTimesArray[5]},${prayerTimesArray[6]},${prayerTimesArray[7]}\n")
-                }
-                popUpMessage("h",line)
-            }
-
-            // Dosyayı oluştur ve yaz
-            val downloadFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val file = File(downloadFolder, csvFileName)
-            file.writeText(csvContent.toString())
-
-            // Kullanıcıya dosyanın indirildiği yeri bildir
-            val context = applicationContext
-            val toastText = "Namaz vakitleri .csv dosyası olarak indirildi: ${file.absolutePath}"
-            Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
-        } ?: run {
-            // Eğer veri yoksa, kullanıcıya hata bildir
-            val context = applicationContext
-            Toast.makeText(context, "Veri bulunamadı.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-
-
-
-
-    private fun doToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }*/

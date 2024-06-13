@@ -21,6 +21,7 @@
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_marginTop="30dp"
+            android:layout_marginStart="30dp"
             android:text="Ayvalık"
             android:textColor="@color/black"
             android:textSize="15sp"
@@ -48,8 +49,130 @@
             android:layout_marginTop="-20dp"
             android:layout_marginStart="350dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
-
-
+        <TextView
+            android:id="@+id/date_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:layout_marginStart="170dp"
+            android:text=""
+            android:textColor="#FFF"
+            android:textSize="20sp"
+            android:focusable="false"/>
+        <TextView
+            android:id="@+id/time1_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="80dp"
+            android:text=""
+            android:textColor="#FFF"
+            android:textSize="50sp"
+            android:focusable="false"
+            android:textStyle="bold"/>
+        <Switch
+            android:id="@+id/time1_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="off"
+            android:textOn="on"
+            android:checked="true"
+            android:layout_marginTop="-45dp"
+            android:layout_marginStart="280dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <TextView
+            android:id="@+id/time2_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="80dp"
+            android:text=""
+            android:textColor="#FFF"
+            android:textSize="50sp"
+            android:focusable="false"
+            android:textStyle="bold"/>
+        <Switch
+            android:id="@+id/time2_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="off"
+            android:textOn="on"
+            android:checked="true"
+            android:layout_marginTop="-45dp"
+            android:layout_marginStart="280dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <TextView
+            android:id="@+id/time3_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="80dp"
+            android:text=""
+            android:textColor="#FFF"
+            android:textSize="50sp"
+            android:focusable="false"
+            android:textStyle="bold"/>
+        <Switch
+            android:id="@+id/time3_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="off"
+            android:textOn="on"
+            android:checked="true"
+            android:layout_marginTop="-45dp"
+            android:layout_marginStart="280dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <TextView
+            android:id="@+id/time4_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="80dp"
+            android:text=""
+            android:textColor="#FFF"
+            android:textSize="50sp"
+            android:focusable="false"
+            android:textStyle="bold"/>
+        <Switch
+            android:id="@+id/time4_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="off"
+            android:textOn="on"
+            android:checked="true"
+            android:layout_marginTop="-45dp"
+            android:layout_marginStart="280dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <TextView
+            android:id="@+id/time5_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="80dp"
+            android:text=""
+            android:textColor="#FFF"
+            android:textSize="50sp"
+            android:focusable="false"
+            android:textStyle="bold"/>
+        <Switch
+            android:id="@+id/time5_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="off"
+            android:textOn="on"
+            android:checked="true"
+            android:layout_marginTop="-45dp"
+            android:layout_marginStart="280dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <Button
+            android:id="@+id/see"
+            android:layout_width="320dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:backgroundTint="#9E1818"
+            android:text="See the list"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
 
     </LinearLayout>
 </RelativeLayout>

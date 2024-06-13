@@ -34,6 +34,9 @@
         <activity
             android:name=".SavedLocations"
             android:exported="false" />
+        <activity
+            android:name=".ListPage"
+            android:exported="false" />
     </application>
 
 </manifest>
