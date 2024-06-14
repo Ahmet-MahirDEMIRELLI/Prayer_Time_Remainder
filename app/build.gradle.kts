@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ezanokuyucu"
+    namespace = "com.example.prayertimeremainder"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.ezanokuyucu"
+        applicationId = "com.example.prayertimeremainder"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

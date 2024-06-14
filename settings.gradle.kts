@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Ezan Okuyucu"
+rootProject.name = "Prayer Time Remainder"
 include(":app")
  

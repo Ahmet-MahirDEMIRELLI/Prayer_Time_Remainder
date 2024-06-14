@@ -1,9 +1,7 @@
-package com.example.ezanokuyucu
+package com.example.prayertimeremainder
 
 import android.annotation.SuppressLint
-import android.app.AlarmManager
 import android.app.AlertDialog
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -32,7 +30,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -89,6 +86,7 @@ class MainActivity : AppCompatActivity() {
             val params = languageTextView.layoutParams as LinearLayout.LayoutParams
             params.marginStart = dpToPx(370)
             languageTextView.layoutParams = params
+            setTimersButton.hint = "Set Alarm"
         }
 
         languageSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -97,11 +95,13 @@ class MainActivity : AppCompatActivity() {
                 val params = languageTextView.layoutParams as LinearLayout.LayoutParams
                 params.marginStart = dpToPx(370)
                 languageTextView.layoutParams = params
+                setTimersButton.hint = "Set Alarm"
             } else {
                 languageTextView.text = "TR"
                 val params = languageTextView.layoutParams as LinearLayout.LayoutParams
                 params.marginStart = dpToPx(350)
                 languageTextView.layoutParams = params
+                setTimersButton.hint = "Alarm Kur"
             }
         }
 
@@ -170,27 +170,9 @@ class MainActivity : AppCompatActivity() {
             setTimeFields()
         }
     }
-    @SuppressLint("ScheduleExactAlarm")
     private fun setTimer(time: String, requestCode: Int){
-//        val (hour, minute) = time.split(":").map { it.toInt() }
-//
-//        val calendar = Calendar.getInstance().apply {
-//            set(Calendar.HOUR_OF_DAY, hour)
-//            set(Calendar.MINUTE, minute)
-//            set(Calendar.SECOND, 0)
-//        }
-//
-//        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-//        val intent = Intent(this, AlarmReceiver::class.java)
-//        val pendingIntent = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-//
-//        alarmManager.setExact(
-//            AlarmManager.RTC_WAKEUP,
-//            calendar.timeInMillis,
-//            pendingIntent
-//        )
+        val (hour, minute) = time.split(":").map { it.toInt() }
 
-        doToast("$time $requestCode")
     }
     private suspend fun checkValidity(): Array<String> {
         return withContext(Dispatchers.IO) {

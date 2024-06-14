@@ -1,4 +1,4 @@
-package com.example.ezanokuyucu
+package com.example.prayertimeremainder
 
 import org.junit.Test
 

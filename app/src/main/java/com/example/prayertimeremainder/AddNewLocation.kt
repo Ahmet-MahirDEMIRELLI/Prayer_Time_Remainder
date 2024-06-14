@@ -1,12 +1,10 @@
-package com.example.ezanokuyucu
+package com.example.prayertimeremainder
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
-import android.provider.DocumentsContract
 import android.util.Log
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -46,22 +44,21 @@ class AddNewLocation : AppCompatActivity() {
         webView.settings.javaScriptEnabled = true
 
         if(language == "TR"){
-            addLocationButton.text = "Konumu Ekle"
+            addLocationButton.text = buildString { append("Konumu Ekle")
+    }
         }
         else{
-            addLocationButton.text = "Add Location"
+            addLocationButton.text = buildString { append("Add Location")
+    }
         }
 
-        // WebViewClient kullanarak URL değişikliklerini takip et
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                // WebView sayfası yüklendikten sonra URL'i al ve işle
                 url?.let { handleUrl(it) }
             }
         }
 
-        // WebView içinde JavaScript ile sayfa yüklendikten sonra yapılacak işlemler
         webView.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
@@ -70,12 +67,9 @@ class AddNewLocation : AppCompatActivity() {
                 }
             }
         }
-    
-        
-        // WebView'e Diyanet namaz vakitleri sitesini yükle
+
         webView.loadUrl("https://namazvakitleri.diyanet.gov.tr/tr-TR")
 
-        // addLocationButton'a tıklanma olayı ekle
         addLocationButton.setOnClickListener {
             val currentUrl = webView.url
             currentUrl?.let { url ->
@@ -88,16 +82,39 @@ class AddNewLocation : AppCompatActivity() {
                         else{
                             name = getLocationNameEN(this@AddNewLocation)
                         }
-                        popUpMessage("w",name+ "\n"+url)
-                        addLocationToFile(name,url)
-                        getPrayerTimes(name,url)
+                        if(isUrlValid(url)){
+                            if(language == "TR"){
+                                doToast("Konum ekleniyor...")
+                            }
+                            else{
+                                doToast("Processing...")
+                            }
+                            addLocationToFile(name,url)
+                            getPrayerTimes(name,url)
+                        }
+                        else if(language == "TR"){
+                            doToast("Lütfen ülkeden başlayarak tekrar seçim yapınız")
+                        }
+                        else{
+                            doToast("Please choose your location again starting from country")
+                        }
                     } catch (e: Exception) {
-                        // Hata işle
+                        Log.e("AddNewLocation", e.toString())
                     }
                 }
             } ?: run {
                 Log.e("MainActivity", "URL is null")
             }
+        }
+    }
+    private fun isUrlValid(url: String): Boolean{
+        val parts = url.substring(8).split("/")
+        if(parts.size == 4 && parts[0] == "namazvakitleri.diyanet.gov.tr" && parts[1] == "tr-TR" &&
+            parts[2].toInt() > 1 && parts[3].contains("-icin-namaz-vakti")){
+            return true
+        }
+        else{
+            return false
         }
     }
     private fun getPrayerTimes(name: String, url: String){
@@ -110,6 +127,12 @@ class AddNewLocation : AppCompatActivity() {
                 } else {
                     Log.e("FetchPrayerTimes", "Prayer times could not be fetched.")
                 }
+                if(language == "TR"){
+                    doToast("Konum eklendi")
+                }
+                else{
+                    doToast("Location added successfully")
+                }
             } catch (e: Exception) {
                 Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
             }
@@ -121,7 +144,6 @@ class AddNewLocation : AppCompatActivity() {
             csvFile.delete()
         }
         csvFile.createNewFile()
-
         val lines = prayerTimes.split("\n")
         for (line in lines) {
             if (line.isNotBlank()) {  // Check if the line is not blank
@@ -136,11 +158,10 @@ class AddNewLocation : AppCompatActivity() {
                 }
             }
         }
-        doToast("file created")
     }
     private fun formatDate(date: String): String{
         val parts = date.split(" ")
-        var mounth: String = when(parts[1]) {
+        val month: String = when(parts[1]) {
             "Ocak" -> "01"
             "Şubat" -> "02"
             "Mart" -> "03"
@@ -155,7 +176,7 @@ class AddNewLocation : AppCompatActivity() {
             "Aralık" -> "12"
             else -> ""
         }
-        return parts[2] + "-" + mounth + "-" + parts[0]
+        return parts[2] + "-" + month + "-" + parts[0]
     }
     private suspend fun fetchPrayerTimes(url: String): String? {
         return withContext(Dispatchers.IO) {
@@ -163,10 +184,8 @@ class AddNewLocation : AppCompatActivity() {
                 val document: Document = Jsoup.connect(url).get()
                 val body = document.body()
 
-                // JSoup ile sayfa içeriğini parse et
                 val parsedDoc = Jsoup.parse(body.toString())
 
-                // Cevabı parse etme
                 val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
                 Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
 
@@ -203,26 +222,12 @@ class AddNewLocation : AppCompatActivity() {
             file.writeText("$name,$url\n")
         } else {
             val currentContent = file.readText()
-            val newContent = "$name,$url\n" + currentContent
+            val newContent = "$name,$url\n$currentContent"
             file.writeText(newContent)
         }
     }
     private fun handleUrl(url: String) {
-        // URL'i işleme fonksiyonu
-        // Burada URL ile istediğiniz işlemleri yapabilirsiniz
-        // Örneğin, URL'i parse edebilir veya farklı bir API'ye gönderebilirsiniz
-        // Şu anda sadece loglama yapıyoruz
         Log.d("MainActivity", "Handling URL: $url")
-    }
-    private fun popUpMessage(title: String, message: String) {
-        val alertDialogBuilder = AlertDialog.Builder(this)
-        alertDialogBuilder.setTitle(title)
-        alertDialogBuilder.setMessage(message)
-        alertDialogBuilder.setPositiveButton("Okay") { dialog, which ->
-            dialog.dismiss()
-        }
-        val alertDialog = alertDialogBuilder.create()
-        alertDialog.show()
     }
     private fun doToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

@@ -1,10 +1,9 @@
-package com.example.ezanokuyucu
+package com.example.prayertimeremainder
 
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ListView

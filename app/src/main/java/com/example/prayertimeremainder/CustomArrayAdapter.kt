@@ -1,4 +1,4 @@
-package com.example.ezanokuyucu
+package com.example.prayertimeremainder
 
 import android.content.Context
 import android.widget.ArrayAdapter
