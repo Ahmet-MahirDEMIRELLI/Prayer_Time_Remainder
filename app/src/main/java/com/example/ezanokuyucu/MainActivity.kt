@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         seeButton = findViewById(R.id.see)
 
         if(language == "EN"){
-            languageTextView.setText("EN")
+            languageTextView.text = "EN"
             val params = languageTextView.layoutParams as LinearLayout.LayoutParams
             params.marginStart = dpToPx(370)
             languageTextView.layoutParams = params
@@ -93,12 +93,12 @@ class MainActivity : AppCompatActivity() {
 
         languageSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                languageTextView.setText("EN")
+                languageTextView.text = "EN"
                 val params = languageTextView.layoutParams as LinearLayout.LayoutParams
                 params.marginStart = dpToPx(370)
                 languageTextView.layoutParams = params
             } else {
-                languageTextView.setText("TR")
+                languageTextView.text = "TR"
                 val params = languageTextView.layoutParams as LinearLayout.LayoutParams
                 params.marginStart = dpToPx(350)
                 languageTextView.layoutParams = params
@@ -420,7 +420,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun formatDate(date: String): String{
         val parts = date.split(" ")
-        var mounth: String = when(parts[1]) {
+        val mounth: String = when(parts[1]) {
             "Ocak" -> "01"
             "Şubat" -> "02"
             "Mart" -> "03"
