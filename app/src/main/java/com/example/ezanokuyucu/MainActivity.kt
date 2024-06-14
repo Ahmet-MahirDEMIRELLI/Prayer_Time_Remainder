@@ -1,10 +1,13 @@
 package com.example.ezanokuyucu
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -16,14 +19,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -51,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var time5Switch: Switch
     private lateinit var dateTextView: TextView
+    private lateinit var setTimersButton: Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -71,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         time4Switch = findViewById(R.id.time4_switch)
         time5Switch = findViewById(R.id.time5_switch)
         dateTextView = findViewById(R.id.date_text_view)
+        setTimersButton = findViewById(R.id.setTimersButton)
         seeButton = findViewById(R.id.see)
 
         if(language == "EN"){
@@ -118,7 +129,17 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("name",locationTextView.text.toString())
             startActivity(intent)
         }
+        setTimersButton.setOnClickListener {
+            CoroutineScope(Dispatchers.Main).launch {
+                val validityWithTime = checkValidity()
+                for (i in 0..8 step 2) {
+                    if (validityWithTime[i] == "1"){
+                        setTimer(validityWithTime[i+1], (i/2) + 1)
+                    }
+                }
+            }
 
+        }
         locationTextView.text = checkSavedLocations()
 
         if(locationTextView.text.toString() == "Kayıtlı Konum Yok" || locationTextView.text.toString() == "No Saved Location"){
@@ -149,14 +170,148 @@ class MainActivity : AppCompatActivity() {
             setTimeFields()
         }
     }
+    @SuppressLint("ScheduleExactAlarm")
+    private fun setTimer(time: String, requestCode: Int){
+//        val (hour, minute) = time.split(":").map { it.toInt() }
+//
+//        val calendar = Calendar.getInstance().apply {
+//            set(Calendar.HOUR_OF_DAY, hour)
+//            set(Calendar.MINUTE, minute)
+//            set(Calendar.SECOND, 0)
+//        }
+//
+//        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+//        val intent = Intent(this, AlarmReceiver::class.java)
+//        val pendingIntent = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+//
+//        alarmManager.setExact(
+//            AlarmManager.RTC_WAKEUP,
+//            calendar.timeInMillis,
+//            pendingIntent
+//        )
+
+        doToast("$time $requestCode")
+    }
+    private suspend fun checkValidity(): Array<String> {
+        return withContext(Dispatchers.IO) {
+            val validityWithTime = Array(10) { "0" }
+            val currentDateTime = LocalDateTime.now()
+            val currentDate = currentDateTime.toString().substring(0, 10)
+            val currentTime = currentDateTime.toString().substring(11, 19)
+            val currentTimeParsed = LocalTime.parse(currentTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+            val temp = dateTextView.text.toString().split("-")
+            val date = temp[2] + "-" + temp[1] + "-" + temp[0]
+            val currentDateParsed = LocalDate.parse(currentDate, DateTimeFormatter.ISO_LOCAL_DATE)
+            val dateParsed = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
+            if (dateParsed.isAfter(currentDateParsed)) {
+                if (time1Switch.isChecked) {
+                    validityWithTime[0] = "1"
+                    validityWithTime[1] = time1TextView.text.toString()
+                }
+                if (time2Switch.isChecked) {
+                    validityWithTime[2] = "1"
+                    validityWithTime[3] = time2TextView.text.toString()
+                }
+                if (time3Switch.isChecked) {
+                    validityWithTime[4] = "1"
+                    validityWithTime[5] = time3TextView.text.toString()
+                }
+                if (time4Switch.isChecked) {
+                    validityWithTime[6] = "1"
+                    validityWithTime[7] = time4TextView.text.toString()
+                }
+                if (time5Switch.isChecked) {
+                    validityWithTime[8] = "1"
+                    validityWithTime[9] = time5TextView.text.toString()
+                }
+            } else {
+                val prayerTime1Parsed =
+                    LocalTime.parse(time1TextView.text.toString(), DateTimeFormatter.ofPattern("HH:mm"))
+                val prayerTime2Parsed =
+                    LocalTime.parse(time2TextView.text.toString(), DateTimeFormatter.ofPattern("HH:mm"))
+                val prayerTime3Parsed =
+                    LocalTime.parse(time3TextView.text.toString(), DateTimeFormatter.ofPattern("HH:mm"))
+                val prayerTime4Parsed =
+                    LocalTime.parse(time4TextView.text.toString(), DateTimeFormatter.ofPattern("HH:mm"))
+                val prayerTime5Parsed =
+                    LocalTime.parse(time5TextView.text.toString(), DateTimeFormatter.ofPattern("HH:mm"))
+                if (prayerTime1Parsed.isAfter(currentTimeParsed)) {
+                    if (time1Switch.isChecked) {
+                        validityWithTime[0] = "1"
+                        validityWithTime[1] = time1TextView.text.toString()
+                    }
+                    if (time2Switch.isChecked) {
+                        validityWithTime[2] = "1"
+                        validityWithTime[3] = time2TextView.text.toString()
+                    }
+                    if (time3Switch.isChecked) {
+                        validityWithTime[4] = "1"
+                        validityWithTime[5] = time3TextView.text.toString()
+                    }
+                    if (time4Switch.isChecked) {
+                        validityWithTime[6] = "1"
+                        validityWithTime[7] = time4TextView.text.toString()
+                    }
+                    if (time5Switch.isChecked) {
+                        validityWithTime[8] = "1"
+                        validityWithTime[9] = time5TextView.text.toString()
+                    }
+                } else if (prayerTime2Parsed.isAfter(currentTimeParsed)) {
+                    if (time2Switch.isChecked) {
+                        validityWithTime[2] = "1"
+                        validityWithTime[3] = time2TextView.text.toString()
+                    }
+                    if (time3Switch.isChecked) {
+                        validityWithTime[4] = "1"
+                        validityWithTime[5] = time3TextView.text.toString()
+                    }
+                    if (time4Switch.isChecked) {
+                        validityWithTime[6] = "1"
+                        validityWithTime[7] = time4TextView.text.toString()
+                    }
+                    if (time5Switch.isChecked) {
+                        validityWithTime[8] = "1"
+                        validityWithTime[9] = time5TextView.text.toString()
+                    }
+                } else if (prayerTime3Parsed.isAfter(currentTimeParsed)) {
+                    if (time3Switch.isChecked) {
+                        validityWithTime[4] = "1"
+                        validityWithTime[5] = time3TextView.text.toString()
+                    }
+                    if (time4Switch.isChecked) {
+                        validityWithTime[6] = "1"
+                        validityWithTime[7] = time4TextView.text.toString()
+                    }
+                    if (time5Switch.isChecked) {
+                        validityWithTime[8] = "1"
+                        validityWithTime[9] = time5TextView.text.toString()
+                    }
+                } else if (prayerTime4Parsed.isAfter(currentTimeParsed)) {
+                    if (time4Switch.isChecked) {
+                        validityWithTime[6] = "1"
+                        validityWithTime[7] = time4TextView.text.toString()
+                    }
+                    if (time5Switch.isChecked) {
+                        validityWithTime[8] = "1"
+                        validityWithTime[9] = time5TextView.text.toString()
+                    }
+                } else if (prayerTime5Parsed.isAfter(currentTimeParsed)) {
+                    if (time5Switch.isChecked) {
+                        validityWithTime[8] = "1"
+                        validityWithTime[9] = time5TextView.text.toString()
+                    }
+                }
+            }
+            return@withContext validityWithTime
+        }
+    }
     private fun setTimeFields() {
         val fileName = locationTextView.text.toString() + ".csv"
         val file = File(this.filesDir, fileName)
-
         if (file.exists()) {
-            val inputStream = FileInputStream(file)
-            val bufferedReader = BufferedReader(InputStreamReader(inputStream))
-            val firstLine = bufferedReader.readLine() // Read the first data line
+            var inputStream = FileInputStream(file)
+            var bufferedReader = BufferedReader(InputStreamReader(inputStream))
+            var firstLine = bufferedReader.readLine() // Read the first data line
             firstLine?.let {
                 var parts = it.split(",")
                 if (parts.size == 6) {
@@ -168,24 +323,36 @@ class MainActivity : AppCompatActivity() {
                     val time5 = parts[5]
 
                     val currentDateTime = LocalDateTime.now()
-                    val currentDate = currentDateTime.toString().substring(0,11)
+                    val currentDate = currentDateTime.toString().substring(0,10)
                     val currentTime = currentDateTime.toString().substring(11,19)
+                    val currentDateParsed = LocalDate.parse(currentDate, DateTimeFormatter.ISO_LOCAL_DATE)
+                    val dateParsed = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
 
                     val currentTimeParsed = LocalTime.parse(currentTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
                     val lastPrayerTime = LocalTime.parse(time5, DateTimeFormatter.ofPattern("HH:mm"))
-                    if (currentTimeParsed.isAfter(lastPrayerTime)) {
-                        val nextLine = bufferedReader.readLine()
-                        parts = nextLine.toString().split(",")
-                        dateTextView.text = parts[0]
-                        time1TextView.text = parts[1]
-                        time2TextView.text = parts[2]
-                        time3TextView.text = parts[3]
-                        time4TextView.text = parts[4]
-                        time5TextView.text = parts[5]
-                        // updateFile
+                    if (currentTimeParsed.isAfter(lastPrayerTime) || currentDateParsed.isAfter(dateParsed)) {
+                        bufferedReader.close()
+                        inputStream.close()
+                        CoroutineScope(Dispatchers.Main).launch {
+                            val dummy = updateFile(fileName)
+                            inputStream = FileInputStream(file)
+                            bufferedReader = BufferedReader(InputStreamReader(inputStream))
+                            firstLine = bufferedReader.readLine()
+                            parts = firstLine.split(",")
+                            val dateParts = parts[0].split("-")
+                            val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                            dateTextView.text = tmp
+                            time1TextView.text = parts[1]
+                            time2TextView.text = parts[2]
+                            time3TextView.text = parts[3]
+                            time4TextView.text = parts[4]
+                            time5TextView.text = parts[5]
+                        }
                     }
                     else {
-                        dateTextView.text = date
+                        val dateParts = date.split("-")
+                        val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                        dateTextView.text = tmp
                         time1TextView.text = time1
                         time2TextView.text = time2
                         time3TextView.text = time3
@@ -197,6 +364,116 @@ class MainActivity : AppCompatActivity() {
             }
             bufferedReader.close()
             inputStream.close()
+        }
+    }
+    private suspend fun updateFile(fileName: String): Boolean{
+        val location = fileName.substring(0, fileName.indexOf("."))
+        val file = File(this.filesDir, "myLocations.csv")
+        return withContext(Dispatchers.IO) {
+            if (file.exists()) {
+                val bufferedReader = file.bufferedReader()
+                val firstLine = bufferedReader.readLine()
+                bufferedReader.close()
+                val parts = firstLine.split(",")
+                val url = parts[1]
+                getPrayerTimes(location, url)
+            }
+            return@withContext true
+        }
+    }
+    private fun getPrayerTimes(name: String, url: String){
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val prayerTimes = fetchPrayerTimes(url)
+                if (prayerTimes != null) {
+                    Log.d("FetchPrayerTimes", "Prayer Times: $prayerTimes")
+                    createCSVFile(prayerTimes, "$name.csv")
+                } else {
+                    Log.e("FetchPrayerTimes", "Prayer times could not be fetched.")
+                }
+            } catch (e: Exception) {
+                Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+            }
+        }
+    }
+    private fun createCSVFile(prayerTimes: String, fileName: String) {
+        val csvFile = File(this.filesDir, fileName)
+        if (csvFile.exists()) {
+            csvFile.delete()
+        }
+        csvFile.createNewFile()
+
+        val lines = prayerTimes.split("\n")
+        for (line in lines) {
+            if (line.isNotBlank()) {  // Check if the line is not blank
+                val parts = line.split(": ")
+                if (parts.size > 1) {
+                    val tmp = parts[0].trim().split(" ")
+                    val date = formatDate(tmp[0] + " " + tmp[1] + " " + tmp[2])
+                    val temp = parts[1].split(", ")
+                    val times = temp[1] + "," + temp[3] + "," + temp[4] + "," + temp[5] + "," + temp[6]
+                    val csvLine = "$date,$times\n"
+                    csvFile.appendText(csvLine)
+                }
+            }
+        }
+    }
+    private fun formatDate(date: String): String{
+        val parts = date.split(" ")
+        var mounth: String = when(parts[1]) {
+            "Ocak" -> "01"
+            "Şubat" -> "02"
+            "Mart" -> "03"
+            "Nisan" -> "04"
+            "Mayıs" -> "05"
+            "Haziran" -> "06"
+            "Temmuz" -> "07"
+            "Ağustos" -> "08"
+            "Eylül" -> "09"
+            "Ekim" -> "10"
+            "Kasım" -> "11"
+            "Aralık" -> "12"
+            else -> ""
+        }
+        return parts[2] + "-" + mounth + "-" + parts[0]
+    }
+    private suspend fun fetchPrayerTimes(url: String): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val document: Document = Jsoup.connect(url).get()
+                val body = document.body()
+
+                // JSoup ile sayfa içeriğini parse et
+                val parsedDoc = Jsoup.parse(body.toString())
+
+                // Cevabı parse etme
+                val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
+                Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
+
+                val rows = prayerTimesElement?.select("tr")
+                val prayerTimesStringBuilder = StringBuilder()
+
+                rows?.forEach { row ->
+                    val columns = row.select("td")
+                    columns.forEachIndexed { index, column ->
+                        if (index == 0) {
+                            prayerTimesStringBuilder.append("${column.text()}: ")
+                        } else if (index == columns.size - 1) {
+                            prayerTimesStringBuilder.append(column.text())
+                        } else {
+                            prayerTimesStringBuilder.append("${column.text()}, ")
+                        }
+                    }
+                    prayerTimesStringBuilder.append("\n")
+                }
+
+                val prayerTimesString = prayerTimesStringBuilder.toString()
+
+                return@withContext prayerTimesString
+            } catch (e: Exception) {
+                Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+                return@withContext null
+            }
         }
     }
     private fun callPage(choice: String){
