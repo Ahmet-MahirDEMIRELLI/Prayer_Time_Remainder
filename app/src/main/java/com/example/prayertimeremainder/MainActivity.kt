@@ -1,9 +1,15 @@
 package com.example.prayertimeremainder
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,7 +18,11 @@ import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +40,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -40,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var languageSwitch: Switch
     private lateinit var language:String
-    private lateinit var seeButton: Button
+    //private lateinit var seeButton: Button
     private lateinit var time1TextView: TextView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var time1Switch: Switch
@@ -58,6 +69,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var time5Switch: Switch
     private lateinit var dateTextView: TextView
     private lateinit var setTimersButton: Button
+    private val PREFS_NAME = "MyPrefs"
+    private val KEY_NOTIFICATION_PERMISSION = "notification_permission"
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -79,7 +94,6 @@ class MainActivity : AppCompatActivity() {
         time5Switch = findViewById(R.id.time5_switch)
         dateTextView = findViewById(R.id.date_text_view)
         setTimersButton = findViewById(R.id.setTimersButton)
-        seeButton = findViewById(R.id.see)
 
         if(language == "EN"){
             languageTextView.text = "EN"
@@ -124,11 +138,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        seeButton.setOnClickListener {
-            val intent = Intent(this, ListPage::class.java)
-            intent.putExtra("name",locationTextView.text.toString())
-            startActivity(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // TIRAMISU is API level 33 (Android 13)
+            val notificationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            if (notificationPermission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 6)
+            }
         }
+
+
         setTimersButton.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 val validityWithTime = checkValidity()
@@ -154,6 +171,7 @@ class MainActivity : AppCompatActivity() {
             time3TextView.visibility = View.INVISIBLE
             time4TextView.visibility = View.INVISIBLE
             time5TextView.visibility = View.INVISIBLE
+            setTimersButton.visibility = View.INVISIBLE
         }
         else {
             time1Switch.visibility = View.VISIBLE
@@ -167,12 +185,36 @@ class MainActivity : AppCompatActivity() {
             time3TextView.visibility = View.VISIBLE
             time4TextView.visibility = View.VISIBLE
             time5TextView.visibility = View.VISIBLE
+            setTimersButton.visibility = View.VISIBLE
             setTimeFields()
+        }
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            6 -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    //
+                }
+            }
         }
     }
     private fun setTimer(time: String, requestCode: Int){
         val (hour, minute) = time.split(":").map { it.toInt() }
-
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val triggerTime: Long = calendar.timeInMillis
+        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+        val broadcastIntent = Intent(this, AlarmReceiver::class.java).apply {
+            putExtra("REQUEST_CODE", requestCode)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(this@MainActivity, requestCode, broadcastIntent, PendingIntent.FLAG_IMMUTABLE)
+        alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+        doToast("Alarm set for $time")
     }
     private suspend fun checkValidity(): Array<String> {
         return withContext(Dispatchers.IO) {

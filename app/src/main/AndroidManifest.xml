@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"
         tools:ignore="ScopedStorage" />
@@ -37,6 +38,10 @@
         <activity
             android:name=".ListPage"
             android:exported="false" />
+        <receiver android:name=".AlarmReceiver"/>
+        <receiver
+            android:name=".NotificationReceiver" >
+        </receiver>
     </application>
 
 </manifest>
