@@ -5,15 +5,16 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+
 
 class AlarmReceiver : BroadcastReceiver() {
     private var mediaPlayer: MediaPlayer? = null
@@ -21,10 +22,12 @@ class AlarmReceiver : BroadcastReceiver() {
     private var notificationManager: NotificationManager? = null
     private var notificationId: Int = 1
     private var notificationChannelId = "media_player_channel"
+    private var language: String = ""
+    private var requestCode: Int = 0
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("AlarmReceiver", "received")
-        val requestCode = intent.getIntExtra("REQUEST_CODE", 0)
-
+        requestCode = intent.getIntExtra("REQUEST_CODE", 0)
+        language = intent.getStringExtra("Language").toString()
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer()
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -60,6 +63,12 @@ class AlarmReceiver : BroadcastReceiver() {
                 mediaPlayer?.setOnPreparedListener {
                     Log.d("AlarmReceiver", "MediaPlayer prepared, starting playback")
                     showNotification(context)
+                    val sharedPref = context.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+                    with (sharedPref.edit()) {
+                        remove("time_$requestCode")
+                        Log.d("Alarm Receiver", "removed $requestCode")
+                        apply()
+                    }
                     mediaPlayer?.start()
                 }
 
@@ -79,7 +88,6 @@ class AlarmReceiver : BroadcastReceiver() {
             Log.e("AlarmReceiver", "Failed to gain audio focus")
         }
     }
-
     private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
@@ -101,16 +109,40 @@ class AlarmReceiver : BroadcastReceiver() {
         }
         val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
-        val notification = NotificationCompat.Builder(context, notificationChannelId)
+        val builder = NotificationCompat.Builder(context, notificationChannelId)
             .setContentTitle("Prayer Time Remainder")
-            .setContentText("Ezan Okunuyor/Call to Prayer")
             .setSmallIcon(R.drawable.notification_icon)
-            .addAction(R.drawable.ic_media_pause, "Kapat/Cancel", pendingIntent)
-            .build()
-
+        if (language == "TR") {
+            builder.setContentText(getPrayerName() + " Ezanı Vakti")
+                .addAction(R.drawable.ic_media_pause, "Ezanı Durdur", pendingIntent)
+        } else {
+            builder.setContentText(getPrayerName() + " Prayer Time")
+                .addAction(R.drawable.ic_media_pause, "Cancel Prayer Call", pendingIntent)
+        }
+        val notification = builder.build()
         notificationManager?.notify(notificationId, notification)
     }
-
+    private fun getPrayerName(): String{
+        if(language == "TR"){
+            when(requestCode){
+                1-> return "Sabah"
+                2-> return "Öğle"
+                3-> return "İkindi"
+                4-> return "Akşam"
+                5-> return "Yatsı"
+            }
+        }
+        else{
+            when(requestCode){
+                1-> return "Morning"
+                2-> return "Noon"
+                3-> return "Afternoon"
+                4-> return "Evening"
+                5-> return "Night"
+            }
+        }
+        return ""
+    }
     private fun cancelNotification() {
         notificationManager?.cancel(notificationId)
     }

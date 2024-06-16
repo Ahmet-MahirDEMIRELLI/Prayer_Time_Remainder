@@ -7,7 +7,6 @@ import android.app.AlertDialog
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -21,7 +20,6 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,29 +46,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var linearLayout: LinearLayout
     private lateinit var locationTextView: TextView
     private lateinit var languageTextView: TextView
+    private lateinit var time1TextView: TextView
+    private lateinit var time2TextView: TextView
+    private lateinit var time3TextView: TextView
+    private lateinit var time4TextView: TextView
+    private lateinit var time5TextView: TextView
+    private lateinit var dateTextView: TextView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var languageSwitch: Switch
-    private lateinit var language:String
-    //private lateinit var seeButton: Button
-    private lateinit var time1TextView: TextView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var time1Switch: Switch
-    private lateinit var time2TextView: TextView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var time2Switch: Switch
-    private lateinit var time3TextView: TextView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var time3Switch: Switch
-    private lateinit var time4TextView: TextView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var time4Switch: Switch
-    private lateinit var time5TextView: TextView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var time5Switch: Switch
-    private lateinit var dateTextView: TextView
     private lateinit var setTimersButton: Button
-    private val PREFS_NAME = "MyPrefs"
-    private val KEY_NOTIFICATION_PERMISSION = "notification_permission"
+    private lateinit var language:String
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,9 +74,9 @@ class MainActivity : AppCompatActivity() {
 
         language = intent.getStringExtra("language") ?: "TR"
         linearLayout = findViewById(R.id.linearLayout)
-        locationTextView = findViewById(R.id.location_text_view)
-        languageSwitch = findViewById(R.id.language_switch)
         languageTextView = findViewById(R.id.language_text_view)
+        locationTextView = findViewById(R.id.location_text_view)
+        dateTextView = findViewById(R.id.date_text_view)
         time1TextView = findViewById(R.id.time1_text_view)
         time2TextView = findViewById(R.id.time2_text_view)
         time3TextView = findViewById(R.id.time3_text_view)
@@ -92,7 +87,7 @@ class MainActivity : AppCompatActivity() {
         time3Switch = findViewById(R.id.time3_switch)
         time4Switch = findViewById(R.id.time4_switch)
         time5Switch = findViewById(R.id.time5_switch)
-        dateTextView = findViewById(R.id.date_text_view)
+        languageSwitch = findViewById(R.id.language_switch)
         setTimersButton = findViewById(R.id.setTimersButton)
 
         if(language == "EN"){
@@ -155,7 +150,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
         }
         locationTextView.text = checkSavedLocations()
 
@@ -199,9 +193,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    @SuppressLint("ScheduleExactAlarm")
     private fun setTimer(time: String, requestCode: Int){
         val (hour, minute) = time.split(":").map { it.toInt() }
-        val calendar = Calendar.getInstance().apply {
+        var calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
@@ -211,10 +206,25 @@ class MainActivity : AppCompatActivity() {
         val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
         val broadcastIntent = Intent(this, AlarmReceiver::class.java).apply {
             putExtra("REQUEST_CODE", requestCode)
+            putExtra("Language", languageTextView.text.toString())
         }
         val pendingIntent = PendingIntent.getBroadcast(this@MainActivity, requestCode, broadcastIntent, PendingIntent.FLAG_IMMUTABLE)
-        alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-        doToast("Alarm set for $time")
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+        if (languageTextView.text.toString() == "TR"){
+            doToast("$time için alarm kuruldu")
+        }
+        else{
+            doToast("Alarm set for $time")
+        }
+        saveAlarm(time, requestCode)
+    }
+    private fun saveAlarm(time: String, requestCode: Int) {
+        val sharedPref = getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+        with (sharedPref.edit()) {
+            putString("time_$requestCode", time)
+            Log.d("Alarm Receiver", "add $requestCode")
+            apply()
+        }
     }
     private suspend fun checkValidity(): Array<String> {
         return withContext(Dispatchers.IO) {
@@ -401,8 +411,9 @@ class MainActivity : AppCompatActivity() {
                 val parts = firstLine.split(",")
                 val url = parts[1]
                 getPrayerTimes(location, url)
+                return@withContext true
             }
-            return@withContext true
+            return@withContext false
         }
     }
     private fun getPrayerTimes(name: String, url: String){
@@ -429,7 +440,7 @@ class MainActivity : AppCompatActivity() {
 
         val lines = prayerTimes.split("\n")
         for (line in lines) {
-            if (line.isNotBlank()) {  // Check if the line is not blank
+            if (line.isNotBlank()) {
                 val parts = line.split(": ")
                 if (parts.size > 1) {
                     val tmp = parts[0].trim().split(" ")
@@ -444,7 +455,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun formatDate(date: String): String{
         val parts = date.split(" ")
-        val mounth: String = when(parts[1]) {
+        val month: String = when(parts[1]) {
             "Ocak" -> "01"
             "Şubat" -> "02"
             "Mart" -> "03"
@@ -459,7 +470,7 @@ class MainActivity : AppCompatActivity() {
             "Aralık" -> "12"
             else -> ""
         }
-        return parts[2] + "-" + mounth + "-" + parts[0]
+        return parts[2] + "-" + month + "-" + parts[0]
     }
     private suspend fun fetchPrayerTimes(url: String): String? {
         return withContext(Dispatchers.IO) {

@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ListView
@@ -124,7 +125,7 @@ class SavedLocations : AppCompatActivity()  {
                 else{
                     newName = getNewNameEN(this@SavedLocations)
                 }
-                implementChangeToFile(newName,name)
+                implementChangeToFiles(newName,name)
             } catch (e: Exception) {
                 // Hata işle
             }
@@ -193,9 +194,10 @@ class SavedLocations : AppCompatActivity()  {
             dialog.show()
         }
     }
-    private fun implementChangeToFile(newName: String, oldName: String){
-        val file = File(this.filesDir, "myLocations.csv")
-        val tempList = mutableListOf<String>()
+    private fun implementChangeToFiles(newName: String, oldName: String){
+        Log.d("Saved Locations", "$oldName  -> $newName")
+        var file = File(this.filesDir, "myLocations.csv")
+        var tempList = mutableListOf<String>()
         try {
             val bufferedReader = file.bufferedReader()
             bufferedReader.forEachLine { line ->
@@ -221,6 +223,41 @@ class SavedLocations : AppCompatActivity()  {
         } catch (e: IOException) {
             e.printStackTrace()
         }
+
+        file = File(this.filesDir, "$oldName.csv")
+        tempList = mutableListOf<String>()
+        try {
+            val bufferedReader = file.bufferedReader()
+            bufferedReader.forEachLine { line ->
+                val parts = line.split(",")
+                if (parts.isNotEmpty()) {
+                    tempList.add(line)
+                }
+            }
+            bufferedReader.close()
+            if (file.delete()){
+                Log.d("Saved Locations", "Old File deleted")
+            }
+            if (file.delete()){
+                Log.d("Saved Locations", "Old File not deleted")
+            }
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        file = File(this.filesDir, "$newName.csv")
+        if (file.exists()) {
+            file.delete()
+        }
+        file.createNewFile()
+        val bufferedWriter = file.bufferedWriter()
+        tempList.forEach { line ->
+            bufferedWriter.write(line)
+            bufferedWriter.newLine()
+        }
+        bufferedWriter.close()
     }
     private fun setCurrentLocation(name: String) {
         val file = File(this.filesDir, "myLocations.csv")
