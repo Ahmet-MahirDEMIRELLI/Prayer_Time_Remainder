@@ -2,8 +2,10 @@
 
 Ahmet Mahir Demirelli - 
 
-Min SDK: 26
+SDK Levels:
 
-Compile SDK: 34
+    Min SDK: 26
 
-Target SDK: 34
+    Compile SDK: 34
+
+    Target SDK: 34
