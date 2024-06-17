@@ -1,6 +1,8 @@
 package com.example.prayertimeremainder
 
+import android.app.AlarmManager
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -74,9 +76,11 @@ class SavedLocations : AppCompatActivity()  {
                         choice = getChoiceEN(this@SavedLocations)
                     }
                     if(choice == "delete"){
+                        deleteAlarms()
                         deleteLocation(selectedItem)
                     }
                     else if(choice == "set"){
+                        deleteAlarms()
                         setCurrentLocation(selectedItem)
                     }
                     else if(choice == "change"){
@@ -86,6 +90,31 @@ class SavedLocations : AppCompatActivity()  {
                     // Hata işle
                 }
             }
+        }
+    }
+    private fun deleteAlarms(){
+        for(i in 1..5 step 1){
+            cancelAlarm(i)
+        }
+    }
+    private fun cancelAlarm(requestCode: Int){
+        val alarmManager = this.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            val sharedPref = this.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+            with (sharedPref.edit()) {
+                remove("time_$requestCode")
+                Log.d("Alarm Receiver", "removed $requestCode")
+                apply()
+            }
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
         }
     }
     private fun deleteLocation(name: String) {
@@ -152,69 +181,7 @@ class SavedLocations : AppCompatActivity()  {
         }
         return true
     }
-    private fun doToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-    private suspend fun getNewNameTR(context: Context): String {
-        return suspendCancellableCoroutine { continuation ->
-            val editText = EditText(context)
-            val dialog = AlertDialog.Builder(context)
-                .setTitle("Yeni adını giriniz")
-                .setView(editText)
-                .setPositiveButton("OK") { _, _ ->
-                    val locationName = editText.text.toString()
-                    if (locationName.isNotEmpty()) {
-                        continuation.resume(locationName)
-                    } else {
-                        doToast("Konum adı alanı boş bırakılamaz")
-                        continuation.resumeWithException(Exception("Konum adı boş olamaz"))
-                    }
-                }
-                .setNegativeButton("Cancel") { _, _ ->
-                    continuation.resumeWithException(Exception("User cancelled the dialog"))
-                }
-                .setOnCancelListener {
-                    continuation.resumeWithException(Exception("Dialog was cancelled"))
-                }
-                .create()
 
-            continuation.invokeOnCancellation {
-                dialog.dismiss()
-            }
-
-            dialog.show()
-        }
-    }
-    private suspend fun getNewNameEN(context: Context): String {
-        return suspendCancellableCoroutine { continuation ->
-            val editText = EditText(context)
-            val dialog = AlertDialog.Builder(context)
-                .setTitle("Enter the new name please")
-                .setView(editText)
-                .setPositiveButton("OK") { _, _ ->
-                    val locationName = editText.text.toString()
-                    if (locationName.isNotEmpty()) {
-                        continuation.resume(locationName)
-                    } else {
-                        doToast("Location name cannot be empty")
-                        continuation.resumeWithException(Exception("Location name cannot be empty"))
-                    }
-                }
-                .setNegativeButton("Cancel") { _, _ ->
-                    continuation.resumeWithException(Exception("User cancelled the dialog"))
-                }
-                .setOnCancelListener {
-                    continuation.resumeWithException(Exception("Dialog was cancelled"))
-                }
-                .create()
-
-            continuation.invokeOnCancellation {
-                dialog.dismiss()
-            }
-
-            dialog.show()
-        }
-    }
     private fun implementChangeToFiles(newName: String, oldName: String){
         Log.d("Saved Locations", "$oldName  -> $newName")
         var file = File(this.filesDir, "myLocations.csv")
@@ -316,11 +283,74 @@ class SavedLocations : AppCompatActivity()  {
             setListView()
         }
     }
+    private fun doToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+    private suspend fun getNewNameTR(context: Context): String {
+        return suspendCancellableCoroutine { continuation ->
+            val editText = EditText(context)
+            val dialog = AlertDialog.Builder(context)
+                .setTitle("Yeni adını giriniz")
+                .setView(editText)
+                .setPositiveButton("OK") { _, _ ->
+                    val locationName = editText.text.toString()
+                    if (locationName.isNotEmpty()) {
+                        continuation.resume(locationName)
+                    } else {
+                        doToast("Konum adı alanı boş bırakılamaz")
+                        continuation.resumeWithException(Exception("Konum adı boş olamaz"))
+                    }
+                }
+                .setNegativeButton("Cancel") { _, _ ->
+                    continuation.resumeWithException(Exception("User cancelled the dialog"))
+                }
+                .setOnCancelListener {
+                    continuation.resumeWithException(Exception("Dialog was cancelled"))
+                }
+                .create()
+
+            continuation.invokeOnCancellation {
+                dialog.dismiss()
+            }
+
+            dialog.show()
+        }
+    }
+    private suspend fun getNewNameEN(context: Context): String {
+        return suspendCancellableCoroutine { continuation ->
+            val editText = EditText(context)
+            val dialog = AlertDialog.Builder(context)
+                .setTitle("Enter the new name please")
+                .setView(editText)
+                .setPositiveButton("OK") { _, _ ->
+                    val locationName = editText.text.toString()
+                    if (locationName.isNotEmpty()) {
+                        continuation.resume(locationName)
+                    } else {
+                        doToast("Location name cannot be empty")
+                        continuation.resumeWithException(Exception("Location name cannot be empty"))
+                    }
+                }
+                .setNegativeButton("Cancel") { _, _ ->
+                    continuation.resumeWithException(Exception("User cancelled the dialog"))
+                }
+                .setOnCancelListener {
+                    continuation.resumeWithException(Exception("Dialog was cancelled"))
+                }
+                .create()
+
+            continuation.invokeOnCancellation {
+                dialog.dismiss()
+            }
+
+            dialog.show()
+        }
+    }
     private suspend fun getChoiceTR(context: Context): String {
         return suspendCancellableCoroutine { continuation ->
             val dialog = AlertDialog.Builder(context)
-                .setTitle("")
-                .setMessage("Seçiniz:")
+                .setTitle("Seçiniz:")
+                .setMessage("Not:Konumu silmek veya konumun adını değiştirmek kurulu tüm alarm/bildirimleri iptal eder")
                 .setPositiveButton("Yeni konum olarak ayarla") { _, _ ->
                     continuation.resume("set")
                 }
@@ -345,8 +375,8 @@ class SavedLocations : AppCompatActivity()  {
     private suspend fun getChoiceEN(context: Context): String {
         return suspendCancellableCoroutine { continuation ->
             val dialog = AlertDialog.Builder(context)
-                .setTitle("")
-                .setMessage("Choose an option:")
+                .setTitle("Choose an option:")
+                .setMessage("Note: Deleting the location or renaming the location will cancel all installed alarms/notifications")
                 .setPositiveButton("Set as current location") { _, _ ->
                     continuation.resume("set")
                 }

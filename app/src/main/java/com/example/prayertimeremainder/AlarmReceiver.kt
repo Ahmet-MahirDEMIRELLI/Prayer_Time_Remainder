@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -15,7 +14,6 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.app.NotificationCompat
 
-
 class AlarmReceiver : BroadcastReceiver() {
     private var mediaPlayer: MediaPlayer? = null
     private var audioManager: AudioManager? = null
@@ -23,7 +21,7 @@ class AlarmReceiver : BroadcastReceiver() {
     private var notificationId: Int = 1
     private var notificationChannelId = "media_player_channel"
     private var language: String = ""
-    private var type: String = "alarm"
+    private var type: String = ""
     private var requestCode: Int = 0
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("AlarmReceiver", "received")
@@ -36,6 +34,7 @@ class AlarmReceiver : BroadcastReceiver() {
         notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         setMediaPlayerInstance(mediaPlayer!!)
         createNotificationChannel(context)
+        Log.d("Alarm Receiver", "$type $language $requestCode")
         if(type == "alarm"){
             val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setAudioAttributes(AudioAttributes.Builder()
@@ -92,6 +91,12 @@ class AlarmReceiver : BroadcastReceiver() {
         }
         else{
             showNotification(context)
+            val sharedPref = context.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+            with (sharedPref.edit()) {
+                remove("time_$requestCode")
+                Log.d("Alarm Receiver", "removed $requestCode")
+                apply()
+            }
         }
     }
     private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
@@ -166,9 +171,7 @@ class AlarmReceiver : BroadcastReceiver() {
     private fun cancelNotification() {
         notificationManager?.cancel(notificationId)
     }
-    fun getMediaPlayerInstance(): MediaPlayer? {
-        return mediaPlayer
-    }
+
     companion object {
         private var mediaPlayer: MediaPlayer? = null
 

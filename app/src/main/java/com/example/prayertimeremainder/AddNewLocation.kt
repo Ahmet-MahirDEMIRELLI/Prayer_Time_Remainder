@@ -1,7 +1,9 @@
 package com.example.prayertimeremainder
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -45,11 +47,11 @@ class AddNewLocation : AppCompatActivity() {
 
         if(language == "TR"){
             addLocationButton.text = buildString { append("Konumu Ekle")
-    }
+            }
         }
         else{
             addLocationButton.text = buildString { append("Add Location")
-    }
+            }
         }
 
         webView.webViewClient = object : WebViewClient() {
@@ -97,6 +99,7 @@ class AddNewLocation : AppCompatActivity() {
                             else{
                                 doToast("Processing...")
                             }
+                            deleteAlarms()
                             addLocationToFile(name,url)
                             getPrayerTimes(name,url)
                         }
@@ -113,6 +116,31 @@ class AddNewLocation : AppCompatActivity() {
             } ?: run {
                 Log.e("MainActivity", "URL is null")
             }
+        }
+    }
+    private fun deleteAlarms(){
+        for(i in 1..5 step 1){
+            cancelAlarm(i)
+        }
+    }
+    private fun cancelAlarm(requestCode: Int){
+        val alarmManager = this.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            val sharedPref = this.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+            with (sharedPref.edit()) {
+                remove("time_$requestCode")
+                Log.d("Alarm Receiver", "removed $requestCode")
+                apply()
+            }
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
         }
     }
     private fun isNewNameValid(name: String): Boolean{
@@ -253,6 +281,7 @@ class AddNewLocation : AppCompatActivity() {
             val editText = EditText(context)
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Enter Location Name")
+                .setMessage("Note:Set alarms/notifications will be deleted as the new location will be set as your current location.")
                 .setView(editText)
                 .setPositiveButton("OK") { _, _ ->
                     val locationName = editText.text.toString()
@@ -283,6 +312,7 @@ class AddNewLocation : AppCompatActivity() {
             val editText = EditText(context)
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Konum Adını Giriniz")
+                .setMessage("Not:Yeni konum şuanki konumunuz olarak ayarlanacağı için kayıtlı alarmlar/bildirimler silinecek")
                 .setView(editText)
                 .setPositiveButton("OK") { _, _ ->
                     val locationName = editText.text.toString()
@@ -318,8 +348,3 @@ class AddNewLocation : AppCompatActivity() {
         finish()
     }
 }
-
-
-
-
-

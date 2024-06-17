@@ -53,7 +53,7 @@
             android:id="@+id/alarm_clock_image_view"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginTop="25dp"
+            android:layout_marginTop="30dp"
             android:layout_marginStart="260dp"
             android:src="@drawable/alarm_clock" />
         <ImageView
@@ -63,13 +63,20 @@
             android:layout_marginTop="-40dp"
             android:layout_marginStart="340dp"
             android:src="@drawable/notification_icon_white" />
+        <ImageView
+            android:id="@+id/time1_bin_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="5dp"
+            android:src="@drawable/bin" />
         <TextView
             android:id="@+id/time1_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="30dp"
-            android:text="03:46"
+            android:layout_marginTop="-53dp"
+            android:layout_marginStart="50dp"
+            android:text=""
             android:textColor="#FFF"
             android:textSize="50sp"
             android:focusable="false"
@@ -94,13 +101,20 @@
             android:layout_marginTop="-28dp"
             android:layout_marginStart="340dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <ImageView
+            android:id="@+id/time2_bin_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="55dp"
+            android:layout_marginStart="5dp"
+            android:src="@drawable/bin" />
         <TextView
             android:id="@+id/time2_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:layout_marginStart="30dp"
-            android:text="13:19"
+            android:layout_marginTop="-53dp"
+            android:layout_marginStart="50dp"
+            android:text=""
             android:textColor="#FFF"
             android:textSize="50sp"
             android:focusable="false"
@@ -125,13 +139,20 @@
             android:layout_marginTop="-28dp"
             android:layout_marginStart="340dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <ImageView
+            android:id="@+id/time3_bin_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="55dp"
+            android:layout_marginStart="5dp"
+            android:src="@drawable/bin" />
         <TextView
             android:id="@+id/time3_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:layout_marginStart="30dp"
-            android:text="17:15"
+            android:layout_marginTop="-53dp"
+            android:layout_marginStart="50dp"
+            android:text=""
             android:textColor="#FFF"
             android:textSize="50sp"
             android:focusable="false"
@@ -156,13 +177,20 @@
             android:layout_marginTop="-28dp"
             android:layout_marginStart="340dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <ImageView
+            android:id="@+id/time4_bin_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="55dp"
+            android:layout_marginStart="5dp"
+            android:src="@drawable/bin" />
         <TextView
             android:id="@+id/time4_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:layout_marginStart="30dp"
-            android:text="20:49"
+            android:layout_marginTop="-53dp"
+            android:layout_marginStart="50dp"
+            android:text=""
             android:textColor="#FFF"
             android:textSize="50sp"
             android:focusable="false"
@@ -187,13 +215,20 @@
             android:layout_marginTop="-28dp"
             android:layout_marginStart="340dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
+        <ImageView
+            android:id="@+id/time5_bin_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="55dp"
+            android:layout_marginStart="5dp"
+            android:src="@drawable/bin" />
         <TextView
             android:id="@+id/time5_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:layout_marginStart="30dp"
-            android:text="22:34"
+            android:layout_marginTop="-53dp"
+            android:layout_marginStart="50dp"
+            android:text=""
             android:textColor="#FFF"
             android:textSize="50sp"
             android:focusable="false"
@@ -234,7 +269,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:layout_marginStart="150dp"
-            android:text="17-06-2024"
+            android:text=""
             android:textColor="#FFF"
             android:textSize="20sp"
             android:focusable="false"/>

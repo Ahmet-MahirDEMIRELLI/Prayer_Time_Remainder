@@ -42,6 +42,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.Date
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -57,6 +58,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dateTextView: TextView
     private lateinit var alarmClockImageView: ImageView
     private lateinit var notificationImageView: ImageView
+    private lateinit var time1BinImageView: ImageView
+    private lateinit var time2BinImageView: ImageView
+    private lateinit var time3BinImageView: ImageView
+    private lateinit var time4BinImageView: ImageView
+    private lateinit var time5BinImageView: ImageView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var languageSwitch: Switch
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -99,6 +105,11 @@ class MainActivity : AppCompatActivity() {
         time5TextView = findViewById(R.id.time5_text_view)
         alarmClockImageView = findViewById(R.id.alarm_clock_image_view)
         notificationImageView = findViewById(R.id.notification_image_view)
+        time1BinImageView = findViewById(R.id.time1_bin_image_view)
+        time2BinImageView = findViewById(R.id.time2_bin_image_view)
+        time3BinImageView = findViewById(R.id.time3_bin_image_view)
+        time4BinImageView = findViewById(R.id.time4_bin_image_view)
+        time5BinImageView = findViewById(R.id.time5_bin_image_view)
         time1AlarmSwitch = findViewById(R.id.time1_alarm_switch)
         time2AlarmSwitch = findViewById(R.id.time2_alarm_switch)
         time3AlarmSwitch = findViewById(R.id.time3_alarm_switch)
@@ -161,8 +172,6 @@ class MainActivity : AppCompatActivity() {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 6)
             }
         }
-
-
         setTimersButton.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 val validityWithTimeAndDay = checkAlarmsValidity()
@@ -174,101 +183,233 @@ class MainActivity : AppCompatActivity() {
                         setTimer(validityWithTimeAndDay[i+2], (i/3) + 1, "notification", validityWithTimeAndDay[i+1])
                     }
                 }
-                setTimer("10:00", 2, "notification", "tomorrow")
             }
         }
         locationTextView.text = checkSavedLocations()
 
         if(locationTextView.text.toString() == "Kayıtlı Konum Yok" || locationTextView.text.toString() == "No Saved Location"){
-            time1AlarmSwitch.visibility = View.INVISIBLE
-            time2AlarmSwitch.visibility = View.INVISIBLE
-            time3AlarmSwitch.visibility = View.INVISIBLE
-            time4AlarmSwitch.visibility = View.INVISIBLE
-            time5AlarmSwitch.visibility = View.INVISIBLE
-            time1NotificationSwitch.visibility = View.INVISIBLE
-            time2NotificationSwitch.visibility = View.INVISIBLE
-            time3NotificationSwitch.visibility = View.INVISIBLE
-            time4NotificationSwitch.visibility = View.INVISIBLE
-            time5NotificationSwitch.visibility = View.INVISIBLE
-            dateTextView.visibility = View.INVISIBLE
-            time1TextView.visibility = View.INVISIBLE
-            time2TextView.visibility = View.INVISIBLE
-            time3TextView.visibility = View.INVISIBLE
-            time4TextView.visibility = View.INVISIBLE
-            time5TextView.visibility = View.INVISIBLE
-            setTimersButton.visibility = View.INVISIBLE
+            setVisibility("INVISIBLE")
         }
         else {
-            time1AlarmSwitch.visibility = View.VISIBLE
-            time2AlarmSwitch.visibility = View.VISIBLE
-            time3AlarmSwitch.visibility = View.VISIBLE
-            time4AlarmSwitch.visibility = View.VISIBLE
-            time5AlarmSwitch.visibility = View.VISIBLE
-            time1NotificationSwitch.visibility = View.VISIBLE
-            time2NotificationSwitch.visibility = View.VISIBLE
-            time3NotificationSwitch.visibility = View.VISIBLE
-            time4NotificationSwitch.visibility = View.VISIBLE
-            time5NotificationSwitch.visibility = View.VISIBLE
-            dateTextView.visibility = View.VISIBLE
-            time1TextView.visibility = View.VISIBLE
-            time2TextView.visibility = View.VISIBLE
-            time3TextView.visibility = View.VISIBLE
-            time4TextView.visibility = View.VISIBLE
-            time5TextView.visibility = View.VISIBLE
-            setTimersButton.visibility = View.VISIBLE
+            setVisibility("VISIBLE")
             setTimeFields()
         }
-    }
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            6 -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    //
+
+        time1AlarmSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time1NotificationSwitch.isChecked = false
+                time1NotificationSwitch.isEnabled = false
+            } else {
+                time1NotificationSwitch.isEnabled = true
+            }
+        }
+        time2AlarmSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time2NotificationSwitch.isChecked = false
+                time2NotificationSwitch.isEnabled = false
+            } else {
+                time2NotificationSwitch.isEnabled = true
+            }
+        }
+        time3AlarmSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time3NotificationSwitch.isChecked = false
+                time3NotificationSwitch.isEnabled = false
+            } else {
+                time3NotificationSwitch.isEnabled = true
+            }
+        }
+        time4AlarmSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time4NotificationSwitch.isChecked = false
+                time4NotificationSwitch.isEnabled = false
+            } else {
+                time4NotificationSwitch.isEnabled = true
+            }
+        }
+        time5AlarmSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time5NotificationSwitch.isChecked = false
+                time5NotificationSwitch.isEnabled = false
+            } else {
+                time5NotificationSwitch.isEnabled = true
+            }
+        }
+        time1NotificationSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time1AlarmSwitch.isChecked = false
+                time1AlarmSwitch.isEnabled = false
+            } else {
+                time1AlarmSwitch.isEnabled = true
+            }
+        }
+        time2NotificationSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time2AlarmSwitch.isChecked = false
+                time2AlarmSwitch.isEnabled = false
+            } else {
+                time2AlarmSwitch.isEnabled = true
+            }
+        }
+        time3NotificationSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time3AlarmSwitch.isChecked = false
+                time3AlarmSwitch.isEnabled = false
+            } else {
+                time3AlarmSwitch.isEnabled = true
+            }
+        }
+        time4NotificationSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time4AlarmSwitch.isChecked = false
+                time4AlarmSwitch.isEnabled = false
+            } else {
+                time4AlarmSwitch.isEnabled = true
+            }
+        }
+        time5NotificationSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                time5AlarmSwitch.isChecked = false
+                time5AlarmSwitch.isEnabled = false
+            } else {
+                time5AlarmSwitch.isEnabled = true
+            }
+        }
+        time1BinImageView.setOnClickListener {
+            if(cancelAlarm(1)){
+                if(languageTextView.text.toString() == "TR"){
+                    doToast("Silindi")
+                }
+                else{
+                    doToast("Deleted")
+                }
+            }
+        }
+        time2BinImageView.setOnClickListener {
+            if(cancelAlarm(2)){
+                if(languageTextView.text.toString() == "TR"){
+                    doToast("Silindi")
+                }
+                else{
+                    doToast("Deleted")
+                }
+            }
+        }
+        time3BinImageView.setOnClickListener {
+            if(cancelAlarm(3)){
+                if(languageTextView.text.toString() == "TR"){
+                    doToast("Silindi")
+                }
+                else{
+                    doToast("Deleted")
+                }
+            }
+        }
+        time4BinImageView.setOnClickListener {
+            if(cancelAlarm(4)){
+                if(languageTextView.text.toString() == "TR"){
+                    doToast("Silindi")
+                }
+                else{
+                    doToast("Deleted")
+                }
+            }
+        }
+        time5BinImageView.setOnClickListener {
+            if(cancelAlarm(5)){
+                if(languageTextView.text.toString() == "TR"){
+                    doToast("Silindi")
+                }
+                else{
+                    doToast("Deleted")
                 }
             }
         }
     }
-    @SuppressLint("ScheduleExactAlarm")
-    private fun setTimer(time: String, requestCode: Int, type: String, day: String){
-        val (hour, minute) = time.split(":").map { it.toInt() }
-        val calendar: Calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-
-            // Eğer belirlenen zaman şu anki zamandan önceyse, bir gün ekle
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
+    private fun cancelAlarm(requestCode: Int): Boolean {
+        val alarmManager = this.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            val sharedPref = this.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+            with (sharedPref.edit()) {
+                remove("time_$requestCode")
+                Log.d("Alarm Receiver", "removed $requestCode")
+                apply()
             }
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+            return true
         }
-        val triggerTime: Long = calendar.timeInMillis
-        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-        val broadcastIntent = Intent(this, AlarmReceiver::class.java).apply {
-            putExtra("REQUEST_CODE", requestCode)
-            putExtra("Language", languageTextView.text.toString())
-            putExtra("Type", type)
-        }
-        val pendingIntent = PendingIntent.getBroadcast(this@MainActivity, requestCode, broadcastIntent, PendingIntent.FLAG_IMMUTABLE)
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-        if (languageTextView.text.toString() == "TR"){
-            if(type == "alarm"){
-                doToast("$time için alarm kuruldu")
+        return false
+    }
+
+    private fun isThereAnAlarmSet(reqCode: Int): Boolean{
+        val intent = Intent(this, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            reqCode,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        return pendingIntent != null
+    }
+    @SuppressLint("ScheduleExactAlarm", "SimpleDateFormat")
+    private fun setTimer(time: String, requestCode: Int, type: String, day: String){
+        if(!isThereAnAlarmSet(requestCode)){
+            val (hour, minute) = time.split(":").map { it.toInt() }
+            val calendar: Calendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+
+                if (timeInMillis <= System.currentTimeMillis()) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
+            }
+            val triggerTime: Long = calendar.timeInMillis
+            val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+            val broadcastIntent = Intent(this, AlarmReceiver::class.java).apply {
+                putExtra("REQUEST_CODE", requestCode)
+                putExtra("Language", languageTextView.text.toString())
+                putExtra("Type", type)
+            }
+            val pendingIntent = PendingIntent.getBroadcast(this@MainActivity, requestCode, broadcastIntent, PendingIntent.FLAG_IMMUTABLE)
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+
+            val alarmDate = Date(triggerTime)
+            val dateFormat = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+            val formattedDate = dateFormat.format(alarmDate)
+            if (languageTextView.text.toString() == "TR"){
+                if(type == "alarm"){
+                    doToast("$formattedDate için alarm kuruldu")
+                }
+                else{
+                    doToast("$formattedDate'da bildirim gönderilecek")
+                }
             }
             else{
-                doToast("$time'da bildirim gönderilecek")
+                if(type == "alarm"){
+                    doToast("Alarm set for $formattedDate")
+                }
+                else{
+                    doToast("Notification will be send at $formattedDate")
+                }
             }
+            saveAlarm(time, requestCode)
+        }
+        else if (languageTextView.text.toString() == "TR"){
+            doToast("$time için kurulu alarm/bildirim bulunmakta")
         }
         else{
-            if(type == "alarm"){
-                doToast("Alarm set for $time")
-            }
-            else{
-                doToast("Notification will be send at $time")
-            }
+            doToast("There is an existing alarm/notification for $time")
         }
-        saveAlarm(time, requestCode)
     }
     private fun saveAlarm(time: String, requestCode: Int) {
         val sharedPref = getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
@@ -527,7 +668,6 @@ class MainActivity : AppCompatActivity() {
                     val time3 = parts[3]
                     val time4 = parts[4]
                     val time5 = parts[5]
-
                     val currentDateTime = LocalDateTime.now()
                     val currentDate = currentDateTime.toString().substring(0,10)
                     val currentTime = currentDateTime.toString().substring(11,19)
@@ -545,6 +685,9 @@ class MainActivity : AppCompatActivity() {
                                 inputStream = FileInputStream(file)
                                 bufferedReader = BufferedReader(InputStreamReader(inputStream))
                                 firstLine = bufferedReader.readLine()
+                                if(currentTimeParsed.isAfter(lastPrayerTime)){
+                                    firstLine = bufferedReader.readLine()
+                                }
                                 parts = firstLine.split(",")
                                 val dateParts = parts[0].split("-")
                                 val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
@@ -579,13 +722,6 @@ class MainActivity : AppCompatActivity() {
             bufferedReader.close()
             inputStream.close()
         }
-    }
-    private fun isNetworkConnected(): Boolean {
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = connectivityManager.activeNetwork ?: return false
-        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-        return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
     }
 
     private suspend fun updateFile(fileName: String): Boolean{
@@ -666,10 +802,8 @@ class MainActivity : AppCompatActivity() {
                 val document: Document = Jsoup.connect(url).get()
                 val body = document.body()
 
-                // JSoup ile sayfa içeriğini parse et
                 val parsedDoc = Jsoup.parse(body.toString())
 
-                // Cevabı parse etme
                 val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
                 Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
 
@@ -698,6 +832,13 @@ class MainActivity : AppCompatActivity() {
                 return@withContext null
             }
         }
+    }
+    private fun isNetworkConnected(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
     }
     private fun callPage(choice: String){
         if(choice == "new"){
@@ -757,6 +898,70 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            6 -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    //
+                }
+            }
+        }
+    }
+    private fun setVisibility(situation: String){
+        if(situation == "VISIBLE"){
+            alarmClockImageView.visibility = View.VISIBLE
+            notificationImageView.visibility = View.VISIBLE
+            time1BinImageView.visibility = View.VISIBLE
+            time2BinImageView.visibility = View.VISIBLE
+            time3BinImageView.visibility = View.VISIBLE
+            time4BinImageView.visibility = View.VISIBLE
+            time5BinImageView.visibility = View.VISIBLE
+            time1AlarmSwitch.visibility = View.VISIBLE
+            time2AlarmSwitch.visibility = View.VISIBLE
+            time3AlarmSwitch.visibility = View.VISIBLE
+            time4AlarmSwitch.visibility = View.VISIBLE
+            time5AlarmSwitch.visibility = View.VISIBLE
+            time1NotificationSwitch.visibility = View.VISIBLE
+            time2NotificationSwitch.visibility = View.VISIBLE
+            time3NotificationSwitch.visibility = View.VISIBLE
+            time4NotificationSwitch.visibility = View.VISIBLE
+            time5NotificationSwitch.visibility = View.VISIBLE
+            dateTextView.visibility = View.VISIBLE
+            time1TextView.visibility = View.VISIBLE
+            time2TextView.visibility = View.VISIBLE
+            time3TextView.visibility = View.VISIBLE
+            time4TextView.visibility = View.VISIBLE
+            time5TextView.visibility = View.VISIBLE
+            setTimersButton.visibility = View.VISIBLE
+        }
+        else{
+            alarmClockImageView.visibility = View.INVISIBLE
+            notificationImageView.visibility = View.INVISIBLE
+            time1BinImageView.visibility = View.INVISIBLE
+            time2BinImageView.visibility = View.INVISIBLE
+            time3BinImageView.visibility = View.INVISIBLE
+            time4BinImageView.visibility = View.INVISIBLE
+            time5BinImageView.visibility = View.INVISIBLE
+            time1AlarmSwitch.visibility = View.INVISIBLE
+            time2AlarmSwitch.visibility = View.INVISIBLE
+            time3AlarmSwitch.visibility = View.INVISIBLE
+            time4AlarmSwitch.visibility = View.INVISIBLE
+            time5AlarmSwitch.visibility = View.INVISIBLE
+            time1NotificationSwitch.visibility = View.INVISIBLE
+            time2NotificationSwitch.visibility = View.INVISIBLE
+            time3NotificationSwitch.visibility = View.INVISIBLE
+            time4NotificationSwitch.visibility = View.INVISIBLE
+            time5NotificationSwitch.visibility = View.INVISIBLE
+            dateTextView.visibility = View.INVISIBLE
+            time1TextView.visibility = View.INVISIBLE
+            time2TextView.visibility = View.INVISIBLE
+            time3TextView.visibility = View.INVISIBLE
+            time4TextView.visibility = View.INVISIBLE
+            time5TextView.visibility = View.INVISIBLE
+            setTimersButton.visibility = View.INVISIBLE
+        }
+    }
     private suspend fun getLocationChoiceEN(context: Context): String {
         return suspendCancellableCoroutine { continuation ->
             val dialog = AlertDialog.Builder(context)
@@ -810,4 +1015,3 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
-
