@@ -1,4 +1,4 @@
-#Prayer Time Remainder for Muslim Relegion
+# Prayer Time Remainder for Muslim Relegion
 
 Ahmet Mahir Demirelli - 
 
