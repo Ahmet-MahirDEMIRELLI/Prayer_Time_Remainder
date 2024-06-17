@@ -8,11 +8,14 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
@@ -52,18 +55,30 @@ class MainActivity : AppCompatActivity() {
     private lateinit var time4TextView: TextView
     private lateinit var time5TextView: TextView
     private lateinit var dateTextView: TextView
+    private lateinit var alarmClockImageView: ImageView
+    private lateinit var notificationImageView: ImageView
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var languageSwitch: Switch
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var time1Switch: Switch
+    private lateinit var time1AlarmSwitch: Switch
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var time2Switch: Switch
+    private lateinit var time2AlarmSwitch: Switch
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var time3Switch: Switch
+    private lateinit var time3AlarmSwitch: Switch
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var time4Switch: Switch
+    private lateinit var time4AlarmSwitch: Switch
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var time5Switch: Switch
+    private lateinit var time5AlarmSwitch: Switch
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var time1NotificationSwitch: Switch
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var time2NotificationSwitch: Switch
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var time3NotificationSwitch: Switch
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var time4NotificationSwitch: Switch
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var time5NotificationSwitch: Switch
     private lateinit var setTimersButton: Button
     private lateinit var language:String
 
@@ -82,11 +97,18 @@ class MainActivity : AppCompatActivity() {
         time3TextView = findViewById(R.id.time3_text_view)
         time4TextView = findViewById(R.id.time4_text_view)
         time5TextView = findViewById(R.id.time5_text_view)
-        time1Switch = findViewById(R.id.time1_switch)
-        time2Switch = findViewById(R.id.time2_switch)
-        time3Switch = findViewById(R.id.time3_switch)
-        time4Switch = findViewById(R.id.time4_switch)
-        time5Switch = findViewById(R.id.time5_switch)
+        alarmClockImageView = findViewById(R.id.alarm_clock_image_view)
+        notificationImageView = findViewById(R.id.notification_image_view)
+        time1AlarmSwitch = findViewById(R.id.time1_alarm_switch)
+        time2AlarmSwitch = findViewById(R.id.time2_alarm_switch)
+        time3AlarmSwitch = findViewById(R.id.time3_alarm_switch)
+        time4AlarmSwitch = findViewById(R.id.time4_alarm_switch)
+        time5AlarmSwitch = findViewById(R.id.time5_alarm_switch)
+        time1NotificationSwitch = findViewById(R.id.time1_notification_switch)
+        time2NotificationSwitch = findViewById(R.id.time2_notification_switch)
+        time3NotificationSwitch = findViewById(R.id.time3_notification_switch)
+        time4NotificationSwitch = findViewById(R.id.time4_notification_switch)
+        time5NotificationSwitch = findViewById(R.id.time5_notification_switch)
         languageSwitch = findViewById(R.id.language_switch)
         setTimersButton = findViewById(R.id.setTimersButton)
 
@@ -143,22 +165,31 @@ class MainActivity : AppCompatActivity() {
 
         setTimersButton.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
-                val validityWithTime = checkValidity()
-                for (i in 0..8 step 2) {
-                    if (validityWithTime[i] == "1"){
-                        setTimer(validityWithTime[i+1], (i/2) + 1)
+                val validityWithTimeAndDay = checkAlarmsValidity()
+                for (i in 0..12 step 3) {
+                    if (validityWithTimeAndDay[i] == "1"){
+                        setTimer(validityWithTimeAndDay[i+2], (i/3) + 1, "alarm", validityWithTimeAndDay[i+1])
+                    }
+                    else if(validityWithTimeAndDay[i] == "2"){
+                        setTimer(validityWithTimeAndDay[i+2], (i/3) + 1, "notification", validityWithTimeAndDay[i+1])
                     }
                 }
+                setTimer("10:00", 2, "notification", "tomorrow")
             }
         }
         locationTextView.text = checkSavedLocations()
 
         if(locationTextView.text.toString() == "Kayıtlı Konum Yok" || locationTextView.text.toString() == "No Saved Location"){
-            time1Switch.visibility = View.INVISIBLE
-            time2Switch.visibility = View.INVISIBLE
-            time3Switch.visibility = View.INVISIBLE
-            time4Switch.visibility = View.INVISIBLE
-            time5Switch.visibility = View.INVISIBLE
+            time1AlarmSwitch.visibility = View.INVISIBLE
+            time2AlarmSwitch.visibility = View.INVISIBLE
+            time3AlarmSwitch.visibility = View.INVISIBLE
+            time4AlarmSwitch.visibility = View.INVISIBLE
+            time5AlarmSwitch.visibility = View.INVISIBLE
+            time1NotificationSwitch.visibility = View.INVISIBLE
+            time2NotificationSwitch.visibility = View.INVISIBLE
+            time3NotificationSwitch.visibility = View.INVISIBLE
+            time4NotificationSwitch.visibility = View.INVISIBLE
+            time5NotificationSwitch.visibility = View.INVISIBLE
             dateTextView.visibility = View.INVISIBLE
             time1TextView.visibility = View.INVISIBLE
             time2TextView.visibility = View.INVISIBLE
@@ -168,11 +199,16 @@ class MainActivity : AppCompatActivity() {
             setTimersButton.visibility = View.INVISIBLE
         }
         else {
-            time1Switch.visibility = View.VISIBLE
-            time2Switch.visibility = View.VISIBLE
-            time3Switch.visibility = View.VISIBLE
-            time4Switch.visibility = View.VISIBLE
-            time5Switch.visibility = View.VISIBLE
+            time1AlarmSwitch.visibility = View.VISIBLE
+            time2AlarmSwitch.visibility = View.VISIBLE
+            time3AlarmSwitch.visibility = View.VISIBLE
+            time4AlarmSwitch.visibility = View.VISIBLE
+            time5AlarmSwitch.visibility = View.VISIBLE
+            time1NotificationSwitch.visibility = View.VISIBLE
+            time2NotificationSwitch.visibility = View.VISIBLE
+            time3NotificationSwitch.visibility = View.VISIBLE
+            time4NotificationSwitch.visibility = View.VISIBLE
+            time5NotificationSwitch.visibility = View.VISIBLE
             dateTextView.visibility = View.VISIBLE
             time1TextView.visibility = View.VISIBLE
             time2TextView.visibility = View.VISIBLE
@@ -194,27 +230,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
     @SuppressLint("ScheduleExactAlarm")
-    private fun setTimer(time: String, requestCode: Int){
+    private fun setTimer(time: String, requestCode: Int, type: String, day: String){
         val (hour, minute) = time.split(":").map { it.toInt() }
-        var calendar = Calendar.getInstance().apply {
+        val calendar: Calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
+
+            // Eğer belirlenen zaman şu anki zamandan önceyse, bir gün ekle
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
         }
         val triggerTime: Long = calendar.timeInMillis
         val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
         val broadcastIntent = Intent(this, AlarmReceiver::class.java).apply {
             putExtra("REQUEST_CODE", requestCode)
             putExtra("Language", languageTextView.text.toString())
+            putExtra("Type", type)
         }
         val pendingIntent = PendingIntent.getBroadcast(this@MainActivity, requestCode, broadcastIntent, PendingIntent.FLAG_IMMUTABLE)
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
         if (languageTextView.text.toString() == "TR"){
-            doToast("$time için alarm kuruldu")
+            if(type == "alarm"){
+                doToast("$time için alarm kuruldu")
+            }
+            else{
+                doToast("$time'da bildirim gönderilecek")
+            }
         }
         else{
-            doToast("Alarm set for $time")
+            if(type == "alarm"){
+                doToast("Alarm set for $time")
+            }
+            else{
+                doToast("Notification will be send at $time")
+            }
         }
         saveAlarm(time, requestCode)
     }
@@ -226,9 +278,9 @@ class MainActivity : AppCompatActivity() {
             apply()
         }
     }
-    private suspend fun checkValidity(): Array<String> {
+    private suspend fun checkAlarmsValidity(): Array<String> {
         return withContext(Dispatchers.IO) {
-            val validityWithTime = Array(10) { "0" }
+            val validityWithTime = Array(15) { "0" }
             val currentDateTime = LocalDateTime.now()
             val currentDate = currentDateTime.toString().substring(0, 10)
             val currentTime = currentDateTime.toString().substring(11, 19)
@@ -238,25 +290,55 @@ class MainActivity : AppCompatActivity() {
             val currentDateParsed = LocalDate.parse(currentDate, DateTimeFormatter.ISO_LOCAL_DATE)
             val dateParsed = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
             if (dateParsed.isAfter(currentDateParsed)) {
-                if (time1Switch.isChecked) {
+                if (time1AlarmSwitch.isChecked) {
                     validityWithTime[0] = "1"
-                    validityWithTime[1] = time1TextView.text.toString()
+                    validityWithTime[1] = "tomorrow"
+                    validityWithTime[2] = time1TextView.text.toString()
                 }
-                if (time2Switch.isChecked) {
-                    validityWithTime[2] = "1"
-                    validityWithTime[3] = time2TextView.text.toString()
+                else if (time1NotificationSwitch.isChecked){
+                    validityWithTime[0] = "2"
+                    validityWithTime[1] = "tomorrow"
+                    validityWithTime[2] = time1TextView.text.toString()
                 }
-                if (time3Switch.isChecked) {
-                    validityWithTime[4] = "1"
-                    validityWithTime[5] = time3TextView.text.toString()
+                if (time2AlarmSwitch.isChecked) {
+                    validityWithTime[3] = "1"
+                    validityWithTime[4] = "tomorrow"
+                    validityWithTime[5] = time2TextView.text.toString()
                 }
-                if (time4Switch.isChecked) {
+                else if (time2NotificationSwitch.isChecked){
+                    validityWithTime[3] = "2"
+                    validityWithTime[4] = "tomorrow"
+                    validityWithTime[5] = time2TextView.text.toString()
+                }
+                if (time3AlarmSwitch.isChecked) {
                     validityWithTime[6] = "1"
-                    validityWithTime[7] = time4TextView.text.toString()
+                    validityWithTime[7] = "tomorrow"
+                    validityWithTime[8] = time3TextView.text.toString()
                 }
-                if (time5Switch.isChecked) {
-                    validityWithTime[8] = "1"
-                    validityWithTime[9] = time5TextView.text.toString()
+                else if (time3NotificationSwitch.isChecked){
+                    validityWithTime[6] = "2"
+                    validityWithTime[7] = "tomorrow"
+                    validityWithTime[8] = time3TextView.text.toString()
+                }
+                if (time4AlarmSwitch.isChecked) {
+                    validityWithTime[9] = "1"
+                    validityWithTime[10] = "tomorrow"
+                    validityWithTime[11] = time4TextView.text.toString()
+                }
+                else if (time4NotificationSwitch.isChecked){
+                    validityWithTime[9] = "2"
+                    validityWithTime[10] = "tomorrow"
+                    validityWithTime[11] = time4TextView.text.toString()
+                }
+                if (time5AlarmSwitch.isChecked) {
+                    validityWithTime[12] = "1"
+                    validityWithTime[13] = "tomorrow"
+                    validityWithTime[14] = time5TextView.text.toString()
+                }
+                else if (time5NotificationSwitch.isChecked){
+                    validityWithTime[13] = "2"
+                    validityWithTime[14] = "tomorrow"
+                    validityWithTime[15] = time5TextView.text.toString()
                 }
             } else {
                 val prayerTime1Parsed =
@@ -270,69 +352,159 @@ class MainActivity : AppCompatActivity() {
                 val prayerTime5Parsed =
                     LocalTime.parse(time5TextView.text.toString(), DateTimeFormatter.ofPattern("HH:mm"))
                 if (prayerTime1Parsed.isAfter(currentTimeParsed)) {
-                    if (time1Switch.isChecked) {
+                    if (time1AlarmSwitch.isChecked) {
                         validityWithTime[0] = "1"
-                        validityWithTime[1] = time1TextView.text.toString()
+                        validityWithTime[1] = "today"
+                        validityWithTime[2] = time1TextView.text.toString()
                     }
-                    if (time2Switch.isChecked) {
-                        validityWithTime[2] = "1"
-                        validityWithTime[3] = time2TextView.text.toString()
+                    else if (time1NotificationSwitch.isChecked){
+                        validityWithTime[0] = "2"
+                        validityWithTime[1] = "today"
+                        validityWithTime[2] = time1TextView.text.toString()
                     }
-                    if (time3Switch.isChecked) {
-                        validityWithTime[4] = "1"
-                        validityWithTime[5] = time3TextView.text.toString()
+                    if (time2AlarmSwitch.isChecked) {
+                        validityWithTime[3] = "1"
+                        validityWithTime[4] = "today"
+                        validityWithTime[5] = time2TextView.text.toString()
                     }
-                    if (time4Switch.isChecked) {
+                    else if (time2NotificationSwitch.isChecked){
+                        validityWithTime[3] = "2"
+                        validityWithTime[4] = "today"
+                        validityWithTime[5] = time2TextView.text.toString()
+                    }
+                    if (time3AlarmSwitch.isChecked) {
                         validityWithTime[6] = "1"
-                        validityWithTime[7] = time4TextView.text.toString()
+                        validityWithTime[7] = "today"
+                        validityWithTime[8] = time3TextView.text.toString()
                     }
-                    if (time5Switch.isChecked) {
-                        validityWithTime[8] = "1"
-                        validityWithTime[9] = time5TextView.text.toString()
+                    else if (time3NotificationSwitch.isChecked){
+                        validityWithTime[6] = "2"
+                        validityWithTime[7] = "today"
+                        validityWithTime[8] = time3TextView.text.toString()
+                    }
+                    if (time4AlarmSwitch.isChecked) {
+                        validityWithTime[9] = "1"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
+                    }
+                    else if (time4NotificationSwitch.isChecked){
+                        validityWithTime[9] = "2"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
+                    }
+                    if (time5AlarmSwitch.isChecked) {
+                        validityWithTime[12] = "1"
+                        validityWithTime[13] = "today"
+                        validityWithTime[14] = time5TextView.text.toString()
+                    }
+                    else if (time5NotificationSwitch.isChecked){
+                        validityWithTime[13] = "2"
+                        validityWithTime[14] = "today"
+                        validityWithTime[15] = time5TextView.text.toString()
                     }
                 } else if (prayerTime2Parsed.isAfter(currentTimeParsed)) {
-                    if (time2Switch.isChecked) {
-                        validityWithTime[2] = "1"
-                        validityWithTime[3] = time2TextView.text.toString()
+                    if (time2AlarmSwitch.isChecked) {
+                        validityWithTime[3] = "1"
+                        validityWithTime[4] = "today"
+                        validityWithTime[5] = time2TextView.text.toString()
                     }
-                    if (time3Switch.isChecked) {
-                        validityWithTime[4] = "1"
-                        validityWithTime[5] = time3TextView.text.toString()
+                    else if (time2NotificationSwitch.isChecked){
+                        validityWithTime[3] = "2"
+                        validityWithTime[4] = "today"
+                        validityWithTime[5] = time2TextView.text.toString()
                     }
-                    if (time4Switch.isChecked) {
+                    if (time3AlarmSwitch.isChecked) {
                         validityWithTime[6] = "1"
-                        validityWithTime[7] = time4TextView.text.toString()
+                        validityWithTime[7] = "today"
+                        validityWithTime[8] = time3TextView.text.toString()
                     }
-                    if (time5Switch.isChecked) {
-                        validityWithTime[8] = "1"
-                        validityWithTime[9] = time5TextView.text.toString()
+                    else if (time3NotificationSwitch.isChecked){
+                        validityWithTime[6] = "2"
+                        validityWithTime[7] = "today"
+                        validityWithTime[8] = time3TextView.text.toString()
+                    }
+                    if (time4AlarmSwitch.isChecked) {
+                        validityWithTime[9] = "1"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
+                    }
+                    else if (time4NotificationSwitch.isChecked){
+                        validityWithTime[9] = "2"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
+                    }
+                    if (time5AlarmSwitch.isChecked) {
+                        validityWithTime[12] = "1"
+                        validityWithTime[13] = "today"
+                        validityWithTime[14] = time5TextView.text.toString()
+                    }
+                    else if (time5NotificationSwitch.isChecked){
+                        validityWithTime[13] = "2"
+                        validityWithTime[14] = "today"
+                        validityWithTime[15] = time5TextView.text.toString()
                     }
                 } else if (prayerTime3Parsed.isAfter(currentTimeParsed)) {
-                    if (time3Switch.isChecked) {
-                        validityWithTime[4] = "1"
-                        validityWithTime[5] = time3TextView.text.toString()
-                    }
-                    if (time4Switch.isChecked) {
+                    if (time3AlarmSwitch.isChecked) {
                         validityWithTime[6] = "1"
-                        validityWithTime[7] = time4TextView.text.toString()
+                        validityWithTime[7] = "today"
+                        validityWithTime[8] = time3TextView.text.toString()
                     }
-                    if (time5Switch.isChecked) {
-                        validityWithTime[8] = "1"
-                        validityWithTime[9] = time5TextView.text.toString()
+                    else if (time3NotificationSwitch.isChecked){
+                        validityWithTime[6] = "2"
+                        validityWithTime[7] = "today"
+                        validityWithTime[8] = time3TextView.text.toString()
+                    }
+                    if (time4AlarmSwitch.isChecked) {
+                        validityWithTime[9] = "1"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
+                    }
+                    else if (time4NotificationSwitch.isChecked){
+                        validityWithTime[9] = "2"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
+                    }
+                    if (time5AlarmSwitch.isChecked) {
+                        validityWithTime[12] = "1"
+                        validityWithTime[13] = "today"
+                        validityWithTime[14] = time5TextView.text.toString()
+                    }
+                    else if (time5NotificationSwitch.isChecked){
+                        validityWithTime[13] = "2"
+                        validityWithTime[14] = "today"
+                        validityWithTime[15] = time5TextView.text.toString()
                     }
                 } else if (prayerTime4Parsed.isAfter(currentTimeParsed)) {
-                    if (time4Switch.isChecked) {
-                        validityWithTime[6] = "1"
-                        validityWithTime[7] = time4TextView.text.toString()
+                    if (time4AlarmSwitch.isChecked) {
+                        validityWithTime[9] = "1"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
                     }
-                    if (time5Switch.isChecked) {
-                        validityWithTime[8] = "1"
-                        validityWithTime[9] = time5TextView.text.toString()
+                    else if (time4NotificationSwitch.isChecked){
+                        validityWithTime[9] = "2"
+                        validityWithTime[10] = "today"
+                        validityWithTime[11] = time4TextView.text.toString()
+                    }
+                    if (time5AlarmSwitch.isChecked) {
+                        validityWithTime[12] = "1"
+                        validityWithTime[13] = "today"
+                        validityWithTime[14] = time5TextView.text.toString()
+                    }
+                    else if (time5NotificationSwitch.isChecked){
+                        validityWithTime[13] = "2"
+                        validityWithTime[14] = "today"
+                        validityWithTime[15] = time5TextView.text.toString()
                     }
                 } else if (prayerTime5Parsed.isAfter(currentTimeParsed)) {
-                    if (time5Switch.isChecked) {
-                        validityWithTime[8] = "1"
-                        validityWithTime[9] = time5TextView.text.toString()
+                    if (time5AlarmSwitch.isChecked) {
+                        validityWithTime[12] = "1"
+                        validityWithTime[13] = "today"
+                        validityWithTime[14] = time5TextView.text.toString()
+                    }
+                    else if (time5NotificationSwitch.isChecked){
+                        validityWithTime[13] = "2"
+                        validityWithTime[14] = "today"
+                        validityWithTime[15] = time5TextView.text.toString()
                     }
                 }
             }
@@ -345,7 +517,7 @@ class MainActivity : AppCompatActivity() {
         if (file.exists()) {
             var inputStream = FileInputStream(file)
             var bufferedReader = BufferedReader(InputStreamReader(inputStream))
-            var firstLine = bufferedReader.readLine() // Read the first data line
+            var firstLine = bufferedReader.readLine()
             firstLine?.let {
                 var parts = it.split(",")
                 if (parts.size == 6) {
@@ -367,20 +539,28 @@ class MainActivity : AppCompatActivity() {
                     if (currentTimeParsed.isAfter(lastPrayerTime) || currentDateParsed.isAfter(dateParsed)) {
                         bufferedReader.close()
                         inputStream.close()
-                        CoroutineScope(Dispatchers.Main).launch {
-                            val dummy = updateFile(fileName)
-                            inputStream = FileInputStream(file)
-                            bufferedReader = BufferedReader(InputStreamReader(inputStream))
-                            firstLine = bufferedReader.readLine()
-                            parts = firstLine.split(",")
-                            val dateParts = parts[0].split("-")
-                            val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
-                            dateTextView.text = tmp
-                            time1TextView.text = parts[1]
-                            time2TextView.text = parts[2]
-                            time3TextView.text = parts[3]
-                            time4TextView.text = parts[4]
-                            time5TextView.text = parts[5]
+                        if(isNetworkConnected()){
+                            CoroutineScope(Dispatchers.Main).launch {
+                                val dummy = updateFile(fileName)
+                                inputStream = FileInputStream(file)
+                                bufferedReader = BufferedReader(InputStreamReader(inputStream))
+                                firstLine = bufferedReader.readLine()
+                                parts = firstLine.split(",")
+                                val dateParts = parts[0].split("-")
+                                val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                                dateTextView.text = tmp
+                                time1TextView.text = parts[1]
+                                time2TextView.text = parts[2]
+                                time3TextView.text = parts[3]
+                                time4TextView.text = parts[4]
+                                time5TextView.text = parts[5]
+                            }
+                        }
+                        else if(languageTextView.text.toString() == "TR"){
+                            doToast("Namaz vakitlerinin güncellenebilmesi için internete bağlanın ve uygulamaya tekrar giriş yapın")
+                        }
+                        else{
+                            doToast("Please connect a network to update prayer times, then open the app again")
                         }
                     }
                     else {
@@ -400,6 +580,14 @@ class MainActivity : AppCompatActivity() {
             inputStream.close()
         }
     }
+    private fun isNetworkConnected(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+    }
+
     private suspend fun updateFile(fileName: String): Boolean{
         val location = fileName.substring(0, fileName.indexOf("."))
         val file = File(this.filesDir, "myLocations.csv")
@@ -513,10 +701,18 @@ class MainActivity : AppCompatActivity() {
     }
     private fun callPage(choice: String){
         if(choice == "new"){
-            val intent = Intent(this, AddNewLocation::class.java)
-            intent.putExtra("language",languageTextView.text.toString())
-            startActivity(intent)
-            finish()
+            if(isNetworkConnected()){
+                val intent = Intent(this, AddNewLocation::class.java)
+                intent.putExtra("language",languageTextView.text.toString())
+                startActivity(intent)
+                finish()
+            }
+            else if(languageTextView.text.toString() == "TR"){
+                doToast("Bu sayfa için bir ağa bağlı olmanız gerekir")
+            }
+            else{
+                doToast("For this page, you need to connected to a wifi/cellular")
+            }
         }
         else{
             val intent = Intent(this, SavedLocations::class.java)

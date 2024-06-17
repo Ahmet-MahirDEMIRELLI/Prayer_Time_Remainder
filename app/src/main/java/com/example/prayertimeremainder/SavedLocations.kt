@@ -89,7 +89,7 @@ class SavedLocations : AppCompatActivity()  {
         }
     }
     private fun deleteLocation(name: String) {
-        val file = File(this.filesDir, "myLocations.csv")
+        var file = File(this.filesDir, "myLocations.csv")
         val tempList = mutableListOf<String>()
 
         try {
@@ -114,22 +114,43 @@ class SavedLocations : AppCompatActivity()  {
         } catch (e: IOException) {
             e.printStackTrace()
         }
+
+        file = File(this.filesDir, "$name.csv")
+        if(file.exists()){
+            file.delete()
+        }
     }
     private fun changeLocationName(name: String) {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val newName:String
+                var newName:String
                 if(language == "TR"){
                     newName = getNewNameTR(this@SavedLocations)
+                    while (!isNewNameValid(newName)) {
+                        doToast("Lütfen dosya isimleri için geçersiz karakterler kullanmayın")
+                        newName = getNewNameTR(this@SavedLocations)
+                    }
                 }
                 else{
                     newName = getNewNameEN(this@SavedLocations)
+                    while (!isNewNameValid(newName)) {
+                        doToast("Please don't use invalid characters for file names")
+                        newName = getNewNameEN(this@SavedLocations)
+                    }
                 }
                 implementChangeToFiles(newName,name)
             } catch (e: Exception) {
                 // Hata işle
             }
         }
+    }
+    private fun isNewNameValid(name: String): Boolean{
+        if (name.contains('\\') || name.contains('/') || name.contains(':') || name.contains('*')
+            || name.contains('?') || name.contains('"') || name.contains('<') || name.contains('>')
+            || name.contains('|') || name.contains('.')) {
+            return false
+        }
+        return true
     }
     private fun doToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

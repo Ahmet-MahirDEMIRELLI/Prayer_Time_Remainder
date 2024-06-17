@@ -23,69 +23,75 @@ class AlarmReceiver : BroadcastReceiver() {
     private var notificationId: Int = 1
     private var notificationChannelId = "media_player_channel"
     private var language: String = ""
+    private var type: String = "alarm"
     private var requestCode: Int = 0
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("AlarmReceiver", "received")
         requestCode = intent.getIntExtra("REQUEST_CODE", 0)
         language = intent.getStringExtra("Language").toString()
+        type = intent.getStringExtra("Type").toString()
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer()
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         setMediaPlayerInstance(mediaPlayer!!)
         createNotificationChannel(context)
+        if(type == "alarm"){
+            val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build())
+                .setOnAudioFocusChangeListener(afChangeListener)
+                .build()
 
-        val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build())
-            .setOnAudioFocusChangeListener(afChangeListener)
-            .build()
+            val result = audioManager?.requestAudioFocus(focusRequest)
 
-        val result = audioManager?.requestAudioFocus(focusRequest)
-
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            try {
-                var rawUri :Uri =Uri.parse("android.resource://" + context.packageName + "/" + R.raw.morning_glory_samsung)
-                when(requestCode){
-                    1-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.morning)
-                    2-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.noon)
-                    3-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.afternoon)
-                    4-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.evening)
-                    5-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.night)
-                }
-
-                mediaPlayer?.setDataSource(context, rawUri)
-
-                mediaPlayer?.prepareAsync()
-
-                mediaPlayer?.setOnPreparedListener {
-                    Log.d("AlarmReceiver", "MediaPlayer prepared, starting playback")
-                    showNotification(context)
-                    val sharedPref = context.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
-                    with (sharedPref.edit()) {
-                        remove("time_$requestCode")
-                        Log.d("Alarm Receiver", "removed $requestCode")
-                        apply()
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                try {
+                    var rawUri :Uri =Uri.parse("android.resource://" + context.packageName + "/" + R.raw.morning_glory_samsung)
+                    when(requestCode){
+                        1-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.morning)
+                        2-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.noon)
+                        3-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.afternoon)
+                        4-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.evening)
+                        5-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.night)
                     }
-                    mediaPlayer?.start()
-                }
 
-                mediaPlayer?.setOnCompletionListener {
-                    Log.d("AlarmReceiver", "MediaPlayer playback completed")
-                    mediaPlayer?.release()
-                    mediaPlayer = null
+                    mediaPlayer?.setDataSource(context, rawUri)
 
-                    audioManager?.abandonAudioFocusRequest(focusRequest)
-                    cancelNotification()
+                    mediaPlayer?.prepareAsync()
+
+                    mediaPlayer?.setOnPreparedListener {
+                        Log.d("AlarmReceiver", "MediaPlayer prepared, starting playback")
+                        showNotificationAlarm(context)
+                        val sharedPref = context.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+                        with (sharedPref.edit()) {
+                            remove("time_$requestCode")
+                            Log.d("Alarm Receiver", "removed $requestCode")
+                            apply()
+                        }
+                        mediaPlayer?.start()
+                    }
+
+                    mediaPlayer?.setOnCompletionListener {
+                        Log.d("AlarmReceiver", "MediaPlayer playback completed")
+                        mediaPlayer?.release()
+                        mediaPlayer = null
+
+                        audioManager?.abandonAudioFocusRequest(focusRequest)
+                        cancelNotification()
+                    }
+                } catch (e: Exception) {
+                    Log.e("AlarmReceiver", "Error setting data source", e)
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                Log.e("AlarmReceiver", "Error setting data source", e)
-                e.printStackTrace()
+            } else {
+                Log.e("AlarmReceiver", "Failed to gain audio focus")
             }
-        } else {
-            Log.e("AlarmReceiver", "Failed to gain audio focus")
+        }
+        else{
+            showNotification(context)
         }
     }
     private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
@@ -103,7 +109,7 @@ class AlarmReceiver : BroadcastReceiver() {
         notificationManager?.createNotificationChannel(channel)
     }
 
-    private fun showNotification(context: Context) {
+    private fun showNotificationAlarm(context: Context) {
         val notificationIntent = Intent(context, NotificationReceiver::class.java).apply {
             action = "STOP_MEDIA_PLAYER"
         }
@@ -111,7 +117,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val builder = NotificationCompat.Builder(context, notificationChannelId)
             .setContentTitle("Prayer Time Remainder")
-            .setSmallIcon(R.drawable.notification_icon)
+            .setSmallIcon(R.drawable.rose)
         if (language == "TR") {
             builder.setContentText(getPrayerName() + " Ezanı Vakti")
                 .addAction(R.drawable.ic_media_pause, "Ezanı Durdur", pendingIntent)
@@ -122,6 +128,20 @@ class AlarmReceiver : BroadcastReceiver() {
         val notification = builder.build()
         notificationManager?.notify(notificationId, notification)
     }
+    private fun showNotification(context: Context) {
+        val builder = NotificationCompat.Builder(context, notificationChannelId)
+            .setContentTitle("Prayer Time Reminder")
+            .setSmallIcon(R.drawable.rose)
+
+        if (language == "TR") {
+            builder.setContentText(getPrayerName() + " Ezanı Vakti")
+        } else {
+            builder.setContentText(getPrayerName() + " Prayer Time")
+        }
+        val notification = builder.build()
+        notificationManager?.notify(notificationId, notification)
+    }
+
     private fun getPrayerName(): String{
         if(language == "TR"){
             when(requestCode){

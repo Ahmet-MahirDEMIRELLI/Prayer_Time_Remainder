@@ -75,12 +75,20 @@ class AddNewLocation : AppCompatActivity() {
             currentUrl?.let { url ->
                 CoroutineScope(Dispatchers.Main).launch {
                     try {
-                        val name:String
+                        var name:String
                         if(language == "TR"){
                             name = getLocationNameTR(this@AddNewLocation)
+                            while (!isNewNameValid(name)) {
+                                doToast("Lütfen dosya isimleri için geçersiz karakterler kullanmayın")
+                                name = getLocationNameTR(this@AddNewLocation)
+                            }
                         }
                         else{
                             name = getLocationNameEN(this@AddNewLocation)
+                            while (!isNewNameValid(name)) {
+                                doToast("Please don't use invalid characters for file names")
+                                name = getLocationNameEN(this@AddNewLocation)
+                            }
                         }
                         if(isUrlValid(url)){
                             if(language == "TR"){
@@ -106,6 +114,14 @@ class AddNewLocation : AppCompatActivity() {
                 Log.e("MainActivity", "URL is null")
             }
         }
+    }
+    private fun isNewNameValid(name: String): Boolean{
+        if (name.contains('\\') || name.contains('/') || name.contains(':') || name.contains('*')
+            || name.contains('?') || name.contains('"') || name.contains('<') || name.contains('>')
+            || name.contains('|') || name.contains('.')) {
+            return false
+        }
+        return true
     }
     private fun isUrlValid(url: String): Boolean{
         val parts = url.substring(8).split("/")
