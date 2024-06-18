@@ -81,6 +81,13 @@
             android:textSize="50sp"
             android:focusable="false"
             android:textStyle="bold"/>
+        <ImageView
+            android:id="@+id/time1_audio_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="-50dp"
+            android:layout_marginStart="190dp"
+            android:src="@drawable/audio" />
         <Switch
             android:id="@+id/time1_alarm_switch"
             android:layout_width="wrap_content"
@@ -88,7 +95,7 @@
             android:textOff="off"
             android:textOn="on"
             android:checked="false"
-            android:layout_marginTop="-45dp"
+            android:layout_marginTop="-30dp"
             android:layout_marginStart="260dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
         <Switch
@@ -119,6 +126,13 @@
             android:textSize="50sp"
             android:focusable="false"
             android:textStyle="bold"/>
+        <ImageView
+            android:id="@+id/time2_audio_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="-50dp"
+            android:layout_marginStart="190dp"
+            android:src="@drawable/audio" />
         <Switch
             android:id="@+id/time2_alarm_switch"
             android:layout_width="wrap_content"
@@ -126,7 +140,7 @@
             android:textOff="off"
             android:textOn="on"
             android:checked="false"
-            android:layout_marginTop="-45dp"
+            android:layout_marginTop="-30dp"
             android:layout_marginStart="260dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
         <Switch
@@ -157,6 +171,13 @@
             android:textSize="50sp"
             android:focusable="false"
             android:textStyle="bold"/>
+        <ImageView
+            android:id="@+id/time3_audio_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="-50dp"
+            android:layout_marginStart="190dp"
+            android:src="@drawable/audio" />
         <Switch
             android:id="@+id/time3_alarm_switch"
             android:layout_width="wrap_content"
@@ -164,7 +185,7 @@
             android:textOff="off"
             android:textOn="on"
             android:checked="false"
-            android:layout_marginTop="-45dp"
+            android:layout_marginTop="-30dp"
             android:layout_marginStart="260dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
         <Switch
@@ -195,6 +216,13 @@
             android:textSize="50sp"
             android:focusable="false"
             android:textStyle="bold"/>
+        <ImageView
+            android:id="@+id/time4_audio_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="-50dp"
+            android:layout_marginStart="190dp"
+            android:src="@drawable/audio" />
         <Switch
             android:id="@+id/time4_alarm_switch"
             android:layout_width="wrap_content"
@@ -202,7 +230,7 @@
             android:textOff="off"
             android:textOn="on"
             android:checked="false"
-            android:layout_marginTop="-45dp"
+            android:layout_marginTop="-30dp"
             android:layout_marginStart="260dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
         <Switch
@@ -233,6 +261,13 @@
             android:textSize="50sp"
             android:focusable="false"
             android:textStyle="bold"/>
+        <ImageView
+            android:id="@+id/time5_audio_image_view"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="-50dp"
+            android:layout_marginStart="190dp"
+            android:src="@drawable/audio" />
         <Switch
             android:id="@+id/time5_alarm_switch"
             android:layout_width="wrap_content"
@@ -240,7 +275,7 @@
             android:textOff="off"
             android:textOn="on"
             android:checked="false"
-            android:layout_marginTop="-45dp"
+            android:layout_marginTop="-30dp"
             android:layout_marginStart="260dp"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
         <Switch

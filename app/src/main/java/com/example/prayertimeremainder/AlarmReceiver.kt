@@ -1,5 +1,6 @@
 package com.example.prayertimeremainder
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -11,8 +12,8 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
-import android.util.Log
 import androidx.core.app.NotificationCompat
+//import android.util.Log
 
 class AlarmReceiver : BroadcastReceiver() {
     private var mediaPlayer: MediaPlayer? = null
@@ -22,19 +23,21 @@ class AlarmReceiver : BroadcastReceiver() {
     private var notificationChannelId = "media_player_channel"
     private var language: String = ""
     private var type: String = ""
+    private var audio: String = ""
     private var requestCode: Int = 0
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d("AlarmReceiver", "received")
+        //Log.d("AlarmReceiver", "received")
         requestCode = intent.getIntExtra("REQUEST_CODE", 0)
         language = intent.getStringExtra("Language").toString()
         type = intent.getStringExtra("Type").toString()
+        audio = intent.getStringExtra("Audio").toString()
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer()
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         setMediaPlayerInstance(mediaPlayer!!)
         createNotificationChannel(context)
-        Log.d("Alarm Receiver", "$type $language $requestCode")
+        //Log.d("Alarm Receiver", "$type $language $requestCode")
         if(type == "alarm"){
             val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setAudioAttributes(AudioAttributes.Builder()
@@ -49,12 +52,14 @@ class AlarmReceiver : BroadcastReceiver() {
             if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 try {
                     var rawUri :Uri =Uri.parse("android.resource://" + context.packageName + "/" + R.raw.morning_glory_samsung)
-                    when(requestCode){
-                        1-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.morning)
-                        2-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.noon)
-                        3-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.afternoon)
-                        4-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.evening)
-                        5-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.night)
+                    if(audio == "Azan"){
+                        when(requestCode){
+                            1-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.morning)
+                            2-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.noon)
+                            3-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.afternoon)
+                            4-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.evening)
+                            5-> rawUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.night)
+                        }
                     }
 
                     mediaPlayer?.setDataSource(context, rawUri)
@@ -62,41 +67,32 @@ class AlarmReceiver : BroadcastReceiver() {
                     mediaPlayer?.prepareAsync()
 
                     mediaPlayer?.setOnPreparedListener {
-                        Log.d("AlarmReceiver", "MediaPlayer prepared, starting playback")
+                        //Log.d("AlarmReceiver", "MediaPlayer prepared, starting playback")
                         showNotificationAlarm(context)
-                        val sharedPref = context.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
-                        with (sharedPref.edit()) {
-                            remove("time_$requestCode")
-                            Log.d("Alarm Receiver", "removed $requestCode")
-                            apply()
-                        }
                         mediaPlayer?.start()
                     }
 
                     mediaPlayer?.setOnCompletionListener {
-                        Log.d("AlarmReceiver", "MediaPlayer playback completed")
+                        //Log.d("AlarmReceiver", "MediaPlayer playback completed")
                         mediaPlayer?.release()
                         mediaPlayer = null
 
                         audioManager?.abandonAudioFocusRequest(focusRequest)
                         cancelNotification()
+                        deleteAlarm(context, requestCode)
+                        showNotification(context)
                     }
                 } catch (e: Exception) {
-                    Log.e("AlarmReceiver", "Error setting data source", e)
+                    //Log.e("AlarmReceiver", "Error setting data source", e)
                     e.printStackTrace()
                 }
             } else {
-                Log.e("AlarmReceiver", "Failed to gain audio focus")
+                //Log.e("AlarmReceiver", "Failed to gain audio focus")
             }
         }
         else{
             showNotification(context)
-            val sharedPref = context.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
-            with (sharedPref.edit()) {
-                remove("time_$requestCode")
-                Log.d("Alarm Receiver", "removed $requestCode")
-                apply()
-            }
+            deleteAlarm(context,requestCode)
         }
     }
     private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
@@ -105,6 +101,26 @@ class AlarmReceiver : BroadcastReceiver() {
                 mediaPlayer?.release()
                 mediaPlayer = null
             }
+        }
+    }
+    private fun deleteAlarm(context: Context,requestCode: Int) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            val sharedPref = context.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
+            with (sharedPref.edit()) {
+                remove("time_$requestCode")
+                //Log.d("Alarm Receiver", "removed $requestCode")
+                apply()
+            }
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
         }
     }
     private fun createNotificationChannel(context: Context) {

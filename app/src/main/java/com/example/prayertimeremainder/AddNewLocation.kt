@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -27,6 +26,7 @@ import org.jsoup.nodes.Element
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+//import android.util.Log
 
 class AddNewLocation : AppCompatActivity() {
     private lateinit var linearLayout: LinearLayout
@@ -110,11 +110,11 @@ class AddNewLocation : AppCompatActivity() {
                             doToast("Please choose your location again starting from country")
                         }
                     } catch (e: Exception) {
-                        Log.e("AddNewLocation", e.toString())
+                        //Log.e("AddNewLocation", e.toString())
                     }
                 }
             } ?: run {
-                Log.e("MainActivity", "URL is null")
+                //Log.e("MainActivity", "URL is null")
             }
         }
     }
@@ -136,7 +136,7 @@ class AddNewLocation : AppCompatActivity() {
             val sharedPref = this.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
             with (sharedPref.edit()) {
                 remove("time_$requestCode")
-                Log.d("Alarm Receiver", "removed $requestCode")
+                //Log.d("Alarm Receiver", "removed $requestCode")
                 apply()
             }
             alarmManager.cancel(pendingIntent)
@@ -166,10 +166,10 @@ class AddNewLocation : AppCompatActivity() {
             try {
                 val prayerTimes = fetchPrayerTimes(url)
                 if (prayerTimes != null) {
-                    Log.d("FetchPrayerTimes", "Prayer Times: $prayerTimes")
+                    //Log.d("FetchPrayerTimes", "Prayer Times: $prayerTimes")
                     createCSVFile(prayerTimes, "$name.csv")
                 } else {
-                    Log.e("FetchPrayerTimes", "Prayer times could not be fetched.")
+                    //Log.e("FetchPrayerTimes", "Prayer times could not be fetched.")
                 }
                 if(language == "TR"){
                     doToast("Konum eklendi")
@@ -178,7 +178,7 @@ class AddNewLocation : AppCompatActivity() {
                     doToast("Location added successfully")
                 }
             } catch (e: Exception) {
-                Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+                //Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
             }
         }
     }
@@ -231,7 +231,7 @@ class AddNewLocation : AppCompatActivity() {
                 val parsedDoc = Jsoup.parse(body.toString())
 
                 val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
-                Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
+                //Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
 
                 val rows = prayerTimesElement?.select("tr")
                 val prayerTimesStringBuilder = StringBuilder()
@@ -254,7 +254,7 @@ class AddNewLocation : AppCompatActivity() {
 
                 return@withContext prayerTimesString
             } catch (e: Exception) {
-                Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+                //Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
                 return@withContext null
             }
         }
@@ -271,7 +271,7 @@ class AddNewLocation : AppCompatActivity() {
         }
     }
     private fun handleUrl(url: String) {
-        Log.d("MainActivity", "Handling URL: $url")
+        //Log.d("MainActivity", "Handling URL: $url")
     }
     private fun doToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -314,7 +314,7 @@ class AddNewLocation : AppCompatActivity() {
                 .setTitle("Konum Adını Giriniz")
                 .setMessage("Not:Yeni konum şuanki konumunuz olarak ayarlanacağı için kayıtlı alarmlar/bildirimler silinecek")
                 .setView(editText)
-                .setPositiveButton("OK") { _, _ ->
+                .setPositiveButton("Tamam") { _, _ ->
                     val locationName = editText.text.toString()
                     if (locationName.isNotEmpty()) {
                         continuation.resume(locationName)
@@ -323,7 +323,7 @@ class AddNewLocation : AppCompatActivity() {
                         continuation.resumeWithException(Exception("Konum adı boş olamaz"))
                     }
                 }
-                .setNegativeButton("Cancel") { _, _ ->
+                .setNegativeButton("İptal") { _, _ ->
                     continuation.resumeWithException(Exception("User cancelled the dialog"))
                 }
                 .setOnCancelListener {

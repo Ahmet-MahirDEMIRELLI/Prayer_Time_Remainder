@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ListView
@@ -21,6 +20,7 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+//import android.util.Log
 
 class SavedLocations : AppCompatActivity()  {
     private lateinit var linearLayout: LinearLayout
@@ -110,7 +110,7 @@ class SavedLocations : AppCompatActivity()  {
             val sharedPref = this.getSharedPreferences("ALARMS", Context.MODE_PRIVATE)
             with (sharedPref.edit()) {
                 remove("time_$requestCode")
-                Log.d("Alarm Receiver", "removed $requestCode")
+                //Log.d("Alarm Receiver", "removed $requestCode")
                 apply()
             }
             alarmManager.cancel(pendingIntent)
@@ -183,7 +183,7 @@ class SavedLocations : AppCompatActivity()  {
     }
 
     private fun implementChangeToFiles(newName: String, oldName: String){
-        Log.d("Saved Locations", "$oldName  -> $newName")
+        //Log.d("Saved Locations", "$oldName  -> $newName")
         var file = File(this.filesDir, "myLocations.csv")
         var tempList = mutableListOf<String>()
         try {
@@ -223,12 +223,13 @@ class SavedLocations : AppCompatActivity()  {
                 }
             }
             bufferedReader.close()
-            if (file.delete()){
-                Log.d("Saved Locations", "Old File deleted")
-            }
-            if (file.delete()){
-                Log.d("Saved Locations", "Old File not deleted")
-            }
+            file.delete()
+//            if (file.delete()){
+//                Log.d("Saved Locations", "Old File deleted")
+//            }
+//            else{
+//                Log.d("Saved Locations", "Old File not deleted")
+//            }
         } catch (e: FileNotFoundException) {
             e.printStackTrace()
         } catch (e: IOException) {
@@ -292,7 +293,7 @@ class SavedLocations : AppCompatActivity()  {
             val dialog = AlertDialog.Builder(context)
                 .setTitle("Yeni adını giriniz")
                 .setView(editText)
-                .setPositiveButton("OK") { _, _ ->
+                .setPositiveButton("Tamam") { _, _ ->
                     val locationName = editText.text.toString()
                     if (locationName.isNotEmpty()) {
                         continuation.resume(locationName)
@@ -301,7 +302,7 @@ class SavedLocations : AppCompatActivity()  {
                         continuation.resumeWithException(Exception("Konum adı boş olamaz"))
                     }
                 }
-                .setNegativeButton("Cancel") { _, _ ->
+                .setNegativeButton("İptal") { _, _ ->
                     continuation.resumeWithException(Exception("User cancelled the dialog"))
                 }
                 .setOnCancelListener {
