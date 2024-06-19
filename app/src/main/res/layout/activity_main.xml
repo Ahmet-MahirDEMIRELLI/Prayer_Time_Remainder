@@ -22,7 +22,7 @@
             android:layout_height="40dp"
             android:layout_marginTop="45dp"
             android:layout_marginStart="30dp"
-            android:text="Ayvalık"
+            android:text=""
             android:textColor="@color/black"
             android:textSize="15sp"
             android:background="@drawable/border"

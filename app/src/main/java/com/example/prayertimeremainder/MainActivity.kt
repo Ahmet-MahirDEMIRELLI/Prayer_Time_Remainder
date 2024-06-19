@@ -12,6 +12,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
@@ -44,7 +45,7 @@ import java.util.Calendar
 import java.util.Date
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-//import android.util.Log
+import kotlin.coroutines.suspendCoroutine
 
 class MainActivity : AppCompatActivity() {
     private lateinit var linearLayout: LinearLayout
@@ -97,6 +98,7 @@ class MainActivity : AppCompatActivity() {
     private var time3AlarmChoice: String = "Azan"
     private var time4AlarmChoice: String = "Azan"
     private var time5AlarmChoice: String = "Azan"
+    private var errorOnSetTimeFields: Boolean = false
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -188,6 +190,9 @@ class MainActivity : AppCompatActivity() {
                 else{
                     time1AlarmChoice = getAlarmChoiceEN(this@MainActivity)
                 }
+                if(time1AlarmChoice == "none"){
+                    time1AlarmChoice = "Azan"
+                }
             }
         }
         time2AudioImageView.setOnClickListener {
@@ -197,6 +202,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 else{
                     time2AlarmChoice = getAlarmChoiceEN(this@MainActivity)
+                }
+                if(time2AlarmChoice == "none"){
+                    time2AlarmChoice = "Azan"
                 }
             }
         }
@@ -208,6 +216,9 @@ class MainActivity : AppCompatActivity() {
                 else{
                     time3AlarmChoice = getAlarmChoiceEN(this@MainActivity)
                 }
+                if(time3AlarmChoice == "none"){
+                    time3AlarmChoice = "Azan"
+                }
             }
         }
         time4AudioImageView.setOnClickListener {
@@ -218,6 +229,9 @@ class MainActivity : AppCompatActivity() {
                 else{
                     time4AlarmChoice = getAlarmChoiceEN(this@MainActivity)
                 }
+                if(time4AlarmChoice == "none"){
+                    time4AlarmChoice = "Azan"
+                }
             }
         }
         time5AudioImageView.setOnClickListener {
@@ -227,6 +241,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 else{
                     time5AlarmChoice = getAlarmChoiceEN(this@MainActivity)
+                }
+                if(time5AlarmChoice == "none"){
+                    time5AlarmChoice = "Azan"
                 }
             }
         }
@@ -251,12 +268,15 @@ class MainActivity : AppCompatActivity() {
         }
         locationTextView.text = checkSavedLocations()
 
-        if(locationTextView.text.toString() == "Kayıtlı Konum Yok" || locationTextView.text.toString() == "No Saved Location"){
-            setVisibility("INVISIBLE")
-        }
-        else {
-            setVisibility("VISIBLE")
-            setTimeFields()
+        setVisibility("INVISIBLE")
+
+        if(locationTextView.text.toString() != "Kayıtlı Konum Yok" && locationTextView.text.toString() != "No Saved Location"){
+            CoroutineScope(Dispatchers.Main).launch {
+                if(setTimeFields() == "done"){
+                    setVisibility("VISIBLE")
+                }
+                Log.d("Main Activity", "returned")
+            }
         }
 
         time1AlarmSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -547,9 +567,9 @@ class MainActivity : AppCompatActivity() {
                     validityWithTime[14] = time5TextView.text.toString()
                 }
                 else if (time5NotificationSwitch.isChecked){
-                    validityWithTime[13] = "2"
-                    validityWithTime[14] = time5AlarmChoice
-                    validityWithTime[15] = time5TextView.text.toString()
+                    validityWithTime[12] = "2"
+                    validityWithTime[13] = time5AlarmChoice
+                    validityWithTime[14] = time5TextView.text.toString()
                 }
             } else {
                 val prayerTime1Parsed =
@@ -722,13 +742,17 @@ class MainActivity : AppCompatActivity() {
             return@withContext validityWithTime
         }
     }
-    private fun setTimeFields() {
+    private suspend fun setTimeFields(): String {
         val fileName = locationTextView.text.toString() + ".csv"
         val file = File(this.filesDir, fileName)
         if (file.exists()) {
-            var inputStream = FileInputStream(file)
+            var inputStream = withContext(Dispatchers.IO) {
+                FileInputStream(file)
+            }
             var bufferedReader = BufferedReader(InputStreamReader(inputStream))
-            var firstLine = bufferedReader.readLine()
+            var firstLine = withContext(Dispatchers.IO) {
+                bufferedReader.readLine()
+            }
             firstLine?.let {
                 var parts = it.split(",")
                 if (parts.size == 6) {
@@ -746,55 +770,118 @@ class MainActivity : AppCompatActivity() {
 
                     val currentTimeParsed = LocalTime.parse(currentTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
                     val lastPrayerTime = LocalTime.parse(time5, DateTimeFormatter.ofPattern("HH:mm"))
-                    if (currentTimeParsed.isAfter(lastPrayerTime) || currentDateParsed.isAfter(dateParsed)) {
-                        bufferedReader.close()
-                        inputStream.close()
-                        if(isNetworkConnected()){
+
+                    if(currentDateParsed.isAfter(dateParsed)){
+                        return suspendCoroutine { continuation ->
                             CoroutineScope(Dispatchers.Main).launch {
-                                val dummy = updateFile(fileName)
-                                inputStream = FileInputStream(file)
-                                bufferedReader = BufferedReader(InputStreamReader(inputStream))
-                                firstLine = bufferedReader.readLine()
-                                if(currentTimeParsed.isAfter(lastPrayerTime)){
-                                    firstLine = bufferedReader.readLine()
+                                val answer: String
+                                if (isNetworkConnected()) {
+                                    if (languageTextView.text.toString() == "TR"){
+                                        doToast("Veriler İşleniyor...")
+                                    }
+                                    else{
+                                        doToast("Processing...")
+                                    }
+                                    answer = updateFile(fileName)
+                                    if (answer != "done") {
+                                        if (languageTextView.text.toString() == "TR") {
+                                            doToast("Veri güncellemesi gerekli, lütfen internete bağlanıp uygulamaya tekrar girin")
+                                        } else {
+                                            doToast("Data update required, please connect to the internet and re-enter the app")
+                                        }
+                                        bufferedReader.close()
+                                        inputStream.close()
+                                    } else {
+                                        if (currentTimeParsed.isAfter(lastPrayerTime)) {
+                                            bufferedReader.close()
+                                            inputStream.close()
+                                            inputStream = FileInputStream(file)
+                                            bufferedReader =
+                                                BufferedReader(InputStreamReader(inputStream))
+                                            firstLine = bufferedReader.readLine()
+                                            firstLine = bufferedReader.readLine()
+                                            parts = firstLine.split(",")
+                                            val dateParts = parts[0].split("-")
+                                            val tmp =
+                                                dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                                            dateTextView.text = tmp
+                                            time1TextView.text = parts[1]
+                                            time2TextView.text = parts[2]
+                                            time3TextView.text = parts[3]
+                                            time4TextView.text = parts[4]
+                                            time5TextView.text = parts[5]
+                                        } else {
+                                            val dateParts = date.split("-")
+                                            val tmp =
+                                                dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                                            dateTextView.text = tmp
+                                            time1TextView.text = time1
+                                            time2TextView.text = time2
+                                            time3TextView.text = time3
+                                            time4TextView.text = time4
+                                            time5TextView.text = time5
+                                        }
+                                    }
+                                } else {
+                                    if (languageTextView.text.toString() == "TR") {
+                                        doToast("Veri güncellemesi gerekli, lütfen internete bağlanıp uygulamaya tekrar girin")
+                                    } else {
+                                        doToast("Data update required, please connect to the internet and re-enter the app")
+                                    }
+                                    bufferedReader.close()
+                                    inputStream.close()
+                                    answer = "error"
                                 }
-                                parts = firstLine.split(",")
-                                val dateParts = parts[0].split("-")
-                                val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
-                                dateTextView.text = tmp
-                                time1TextView.text = parts[1]
-                                time2TextView.text = parts[2]
-                                time3TextView.text = parts[3]
-                                time4TextView.text = parts[4]
-                                time5TextView.text = parts[5]
+                                Log.d("Main Activity", "returning $answer")
+                                continuation.resume(answer)
                             }
                         }
-                        else if(languageTextView.text.toString() == "TR"){
-                            doToast("Namaz vakitlerinin güncellenebilmesi için internete bağlanın ve uygulamaya tekrar giriş yapın")
+                    }
+                    else{
+                        if(currentTimeParsed.isAfter(lastPrayerTime)){
+                            bufferedReader.close()
+                            inputStream.close()
+                            inputStream = FileInputStream(file)
+                            bufferedReader = BufferedReader(InputStreamReader(inputStream))
+                            firstLine = bufferedReader.readLine()
+                            firstLine = bufferedReader.readLine()
+                            parts = firstLine.split(",")
+                            val dateParts = parts[0].split("-")
+                            val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                            dateTextView.text = tmp
+                            time1TextView.text = parts[1]
+                            time2TextView.text = parts[2]
+                            time3TextView.text = parts[3]
+                            time4TextView.text = parts[4]
+                            time5TextView.text = parts[5]
                         }
                         else{
-                            doToast("Please connect a network to update prayer times, then open the app again")
+                            val dateParts = date.split("-")
+                            val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                            dateTextView.text = tmp
+                            time1TextView.text = time1
+                            time2TextView.text = time2
+                            time3TextView.text = time3
+                            time4TextView.text = time4
+                            time5TextView.text = time5
                         }
+                        return "done"
                     }
-                    else {
-                        val dateParts = date.split("-")
-                        val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
-                        dateTextView.text = tmp
-                        time1TextView.text = time1
-                        time2TextView.text = time2
-                        time3TextView.text = time3
-                        time4TextView.text = time4
-                        time5TextView.text = time5
-                    }
-
+                }
+                else{
+                    return "error"
                 }
             }
             bufferedReader.close()
             inputStream.close()
+            return "done"
+        }
+        else{
+            return "error"
         }
     }
 
-    private suspend fun updateFile(fileName: String): Boolean{
+    private suspend fun updateFile(fileName: String): String{
         val location = fileName.substring(0, fileName.indexOf("."))
         val file = File(this.filesDir, "myLocations.csv")
         return withContext(Dispatchers.IO) {
@@ -804,25 +891,39 @@ class MainActivity : AppCompatActivity() {
                 bufferedReader.close()
                 val parts = firstLine.split(",")
                 val url = parts[1]
-                getPrayerTimes(location, url)
-                return@withContext true
-            }
-            return@withContext false
-        }
-    }
-    private fun getPrayerTimes(name: String, url: String){
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                val prayerTimes = fetchPrayerTimes(url)
-                if (prayerTimes != null) {
-                    //Log.d("FetchPrayerTimes", "Prayer Times: $prayerTimes")
-                    createCSVFile(prayerTimes, "$name.csv")
-                } else {
-                    //Log.e("FetchPrayerTimes", "Prayer times could not be fetched.")
+                val prayerTimes: String
+                //fetch prayer times
+                try {
+                    val document: Document = Jsoup.connect(url).get()
+                    val body = document.body()
+                    val parsedDoc = Jsoup.parse(body.toString())
+                    val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
+                    //Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
+                    val rows = prayerTimesElement?.select("tr")
+                    val prayerTimesStringBuilder = StringBuilder()
+                    rows?.forEach { row ->
+                        val columns = row.select("td")
+                        columns.forEachIndexed { index, column ->
+                            if (index == 0) {
+                                prayerTimesStringBuilder.append("${column.text()}: ")
+                            } else if (index == columns.size - 1) {
+                                prayerTimesStringBuilder.append(column.text())
+                            } else {
+                                prayerTimesStringBuilder.append("${column.text()}, ")
+                            }
+                        }
+                        prayerTimesStringBuilder.append("\n")
+                    }
+                    prayerTimes = prayerTimesStringBuilder.toString()
+                } catch (e: Exception) {
+                    //Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+                    return@withContext "fetching"
                 }
-            } catch (e: Exception) {
-                //Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
+
+                createCSVFile(prayerTimes, "$location.csv")
+                return@withContext "done"
             }
+            return@withContext "no file"
         }
     }
     private fun createCSVFile(prayerTimes: String, fileName: String) {
@@ -865,43 +966,6 @@ class MainActivity : AppCompatActivity() {
             else -> ""
         }
         return parts[2] + "-" + month + "-" + parts[0]
-    }
-    private suspend fun fetchPrayerTimes(url: String): String? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val document: Document = Jsoup.connect(url).get()
-                val body = document.body()
-
-                val parsedDoc = Jsoup.parse(body.toString())
-
-                val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
-                //Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
-
-                val rows = prayerTimesElement?.select("tr")
-                val prayerTimesStringBuilder = StringBuilder()
-
-                rows?.forEach { row ->
-                    val columns = row.select("td")
-                    columns.forEachIndexed { index, column ->
-                        if (index == 0) {
-                            prayerTimesStringBuilder.append("${column.text()}: ")
-                        } else if (index == columns.size - 1) {
-                            prayerTimesStringBuilder.append(column.text())
-                        } else {
-                            prayerTimesStringBuilder.append("${column.text()}, ")
-                        }
-                    }
-                    prayerTimesStringBuilder.append("\n")
-                }
-
-                val prayerTimesString = prayerTimesStringBuilder.toString()
-
-                return@withContext prayerTimesString
-            } catch (e: Exception) {
-                //Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
-                return@withContext null
-            }
-        }
     }
     private fun isNetworkConnected(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -1098,7 +1162,7 @@ class MainActivity : AppCompatActivity() {
                     continuation.resume("Morning Glory")
                 }
                 .setOnCancelListener {
-                    continuation.resumeWithException(Exception("Dialog was cancelled"))
+                    continuation.resume("none")
                 }
                 .create()
 
@@ -1121,7 +1185,7 @@ class MainActivity : AppCompatActivity() {
                     continuation.resume("Morning Glory")
                 }
                 .setOnCancelListener {
-                    continuation.resumeWithException(Exception("Dialog was cancelled"))
+                    continuation.resume("none")
                 }
                 .create()
 
