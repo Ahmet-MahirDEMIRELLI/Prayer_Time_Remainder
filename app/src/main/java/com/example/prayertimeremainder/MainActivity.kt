@@ -12,7 +12,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
@@ -46,6 +45,7 @@ import java.util.Date
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+//import android.util.Log
 
 class MainActivity : AppCompatActivity() {
     private lateinit var linearLayout: LinearLayout
@@ -275,7 +275,7 @@ class MainActivity : AppCompatActivity() {
                 if(setTimeFields() == "done"){
                     setVisibility("VISIBLE")
                 }
-                Log.d("Main Activity", "returned")
+                //Log.d("Main Activity", "returned")
             }
         }
 
@@ -832,7 +832,7 @@ class MainActivity : AppCompatActivity() {
                                     inputStream.close()
                                     answer = "error"
                                 }
-                                Log.d("Main Activity", "returning $answer")
+                                //Log.d("Main Activity", "returning $answer")
                                 continuation.resume(answer)
                             }
                         }
