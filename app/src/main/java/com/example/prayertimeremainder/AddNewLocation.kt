@@ -166,10 +166,10 @@ class AddNewLocation : AppCompatActivity() {
             try {
                 val prayerTimes = fetchPrayerTimes(url)
                 if (prayerTimes != null) {
-                    //Log.d("FetchPrayerTimes", "Prayer Times: $prayerTimes")
+                    //Log.d("Add New Location", "Prayer Times: $prayerTimes")
                     createCSVFile(prayerTimes, "$name.csv")
                 } else {
-                    //Log.e("FetchPrayerTimes", "Prayer times could not be fetched.")
+                    //Log.e("Add New Location", "Prayer times could not be fetched.")
                 }
                 if(language == "TR"){
                     doToast("Konum eklendi")

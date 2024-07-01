@@ -458,6 +458,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val triggerTime: Long = calendar.timeInMillis
+
             val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
             val broadcastIntent = Intent(this, AlarmReceiver::class.java).apply {
                 putExtra("REQUEST_CODE", requestCode)
@@ -629,9 +630,9 @@ class MainActivity : AppCompatActivity() {
                         validityWithTime[14] = time5TextView.text.toString()
                     }
                     else if (time5NotificationSwitch.isChecked){
-                        validityWithTime[13] = "2"
-                        validityWithTime[14] = time5AlarmChoice
-                        validityWithTime[15] = time5TextView.text.toString()
+                        validityWithTime[12] = "2"
+                        validityWithTime[13] = time5AlarmChoice
+                        validityWithTime[14] = time5TextView.text.toString()
                     }
                 } else if (prayerTime2Parsed.isAfter(currentTimeParsed)) {
                     if (time2AlarmSwitch.isChecked) {
@@ -670,9 +671,9 @@ class MainActivity : AppCompatActivity() {
                         validityWithTime[14] = time5TextView.text.toString()
                     }
                     else if (time5NotificationSwitch.isChecked){
-                        validityWithTime[13] = "2"
-                        validityWithTime[14] = time5AlarmChoice
-                        validityWithTime[15] = time5TextView.text.toString()
+                        validityWithTime[12] = "2"
+                        validityWithTime[13] = time5AlarmChoice
+                        validityWithTime[14] = time5TextView.text.toString()
                     }
                 } else if (prayerTime3Parsed.isAfter(currentTimeParsed)) {
                     if (time3AlarmSwitch.isChecked) {
@@ -701,9 +702,9 @@ class MainActivity : AppCompatActivity() {
                         validityWithTime[14] = time5TextView.text.toString()
                     }
                     else if (time5NotificationSwitch.isChecked){
-                        validityWithTime[13] = "2"
-                        validityWithTime[14] = time5AlarmChoice
-                        validityWithTime[15] = time5TextView.text.toString()
+                        validityWithTime[12] = "2"
+                        validityWithTime[13] = time5AlarmChoice
+                        validityWithTime[14] = time5TextView.text.toString()
                     }
                 } else if (prayerTime4Parsed.isAfter(currentTimeParsed)) {
                     if (time4AlarmSwitch.isChecked) {
@@ -722,9 +723,9 @@ class MainActivity : AppCompatActivity() {
                         validityWithTime[14] = time5TextView.text.toString()
                     }
                     else if (time5NotificationSwitch.isChecked){
-                        validityWithTime[13] = "2"
-                        validityWithTime[14] = time5AlarmChoice
-                        validityWithTime[15] = time5TextView.text.toString()
+                        validityWithTime[12] = "2"
+                        validityWithTime[13] = time5AlarmChoice
+                        validityWithTime[14] = time5TextView.text.toString()
                     }
                 } else if (prayerTime5Parsed.isAfter(currentTimeParsed)) {
                     if (time5AlarmSwitch.isChecked) {
@@ -733,9 +734,9 @@ class MainActivity : AppCompatActivity() {
                         validityWithTime[14] = time5TextView.text.toString()
                     }
                     else if (time5NotificationSwitch.isChecked){
-                        validityWithTime[13] = "2"
-                        validityWithTime[14] = time5AlarmChoice
-                        validityWithTime[15] = time5TextView.text.toString()
+                        validityWithTime[12] = "2"
+                        validityWithTime[13] = time5AlarmChoice
+                        validityWithTime[14] = time5TextView.text.toString()
                     }
                 }
             }
@@ -753,128 +754,165 @@ class MainActivity : AppCompatActivity() {
             var firstLine = withContext(Dispatchers.IO) {
                 bufferedReader.readLine()
             }
-            firstLine?.let {
-                var parts = it.split(",")
-                if (parts.size == 6) {
-                    val date = parts[0]
-                    val time1 = parts[1]
-                    val time2 = parts[2]
-                    val time3 = parts[3]
-                    val time4 = parts[4]
-                    val time5 = parts[5]
-                    val currentDateTime = LocalDateTime.now()
-                    val currentDate = currentDateTime.toString().substring(0,10)
-                    val currentTime = currentDateTime.toString().substring(11,19)
-                    val currentDateParsed = LocalDate.parse(currentDate, DateTimeFormatter.ISO_LOCAL_DATE)
-                    val dateParsed = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
+            //Log.d("Main Activity", firstLine)
+            var parts = firstLine.split(",")
+            if (parts.size == 6) {
+                var date = parts[0]
+                var time1 = parts[1]
+                var time2 = parts[2]
+                var time3 = parts[3]
+                var time4 = parts[4]
+                var time5 = parts[5]
 
-                    val currentTimeParsed = LocalTime.parse(currentTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
-                    val lastPrayerTime = LocalTime.parse(time5, DateTimeFormatter.ofPattern("HH:mm"))
+                val currentDateTime = LocalDateTime.now()
+                val currentDate = currentDateTime.toString().substring(0,10)
+                val currentTime = currentDateTime.toString().substring(11,19)
+                val currentDateParsed = LocalDate.parse(currentDate, DateTimeFormatter.ISO_LOCAL_DATE)
+                val dateParsed = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
 
-                    if(currentDateParsed.isAfter(dateParsed)){
-                        return suspendCoroutine { continuation ->
-                            CoroutineScope(Dispatchers.Main).launch {
-                                val answer: String
-                                if (isNetworkConnected()) {
-                                    if (languageTextView.text.toString() == "TR"){
-                                        doToast("Veriler İşleniyor...")
+                val currentTimeParsed = LocalTime.parse(currentTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+                var lastPrayerTime = LocalTime.parse(time5, DateTimeFormatter.ofPattern("HH:mm"))
+
+                if(currentDateParsed.isAfter(dateParsed)){
+                    return suspendCoroutine { continuation ->
+                        CoroutineScope(Dispatchers.Main).launch {
+                            val answer: String
+                            if (isNetworkConnected()) {
+                                if (languageTextView.text.toString() == "TR"){
+                                    doToast("Veriler İşleniyor...")
+                                }
+                                else{
+                                    doToast("Processing...")
+                                }
+                                bufferedReader.close()
+                                inputStream.close()
+                                answer = updateFile(fileName)
+                                if (answer != "done") {
+                                    if(answer == "error"){
+                                        inputStream = FileInputStream(file)
+                                        bufferedReader =  BufferedReader(InputStreamReader(inputStream))
+                                        var line: String
+                                        line = bufferedReader.readLine()
+                                        parts = line.split(",")
+                                        var counter = 0
+                                        while(counter < 5 && currentDate != parts[0]){
+                                            line = bufferedReader.readLine()
+                                            parts = line.split(",")
+                                            counter++
+                                        }
+                                        //Log.d("Main Activity", line)
+                                        parts = line.split(",")
+                                        date = parts[0]
+                                        time1 = parts[1]
+                                        time2 = parts[2]
+                                        time3 = parts[3]
+                                        time4 = parts[4]
+                                        time5 = parts[5]
+                                        if(languageTextView.text.toString() == "TR"){
+                                            doToast("Verilen güncellenemedi. Lütfen daha sonra tekrar deneyiniz.")
+                                        }
+                                        else{
+                                            doToast("Data can not be updated. Please try again later")
+                                        }
                                     }
                                     else{
-                                        doToast("Processing...")
-                                    }
-                                    answer = updateFile(fileName)
-                                    if (answer != "done") {
                                         if (languageTextView.text.toString() == "TR") {
                                             doToast("Veri güncellemesi gerekli, lütfen internete bağlanıp uygulamaya tekrar girin")
                                         } else {
                                             doToast("Data update required, please connect to the internet and re-enter the app")
                                         }
-                                        bufferedReader.close()
-                                        inputStream.close()
-                                    } else {
-                                        if (currentTimeParsed.isAfter(lastPrayerTime)) {
-                                            bufferedReader.close()
-                                            inputStream.close()
-                                            inputStream = FileInputStream(file)
-                                            bufferedReader =
-                                                BufferedReader(InputStreamReader(inputStream))
-                                            firstLine = bufferedReader.readLine()
-                                            firstLine = bufferedReader.readLine()
-                                            parts = firstLine.split(",")
-                                            val dateParts = parts[0].split("-")
-                                            val tmp =
-                                                dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
-                                            dateTextView.text = tmp
-                                            time1TextView.text = parts[1]
-                                            time2TextView.text = parts[2]
-                                            time3TextView.text = parts[3]
-                                            time4TextView.text = parts[4]
-                                            time5TextView.text = parts[5]
-                                        } else {
-                                            val dateParts = date.split("-")
-                                            val tmp =
-                                                dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
-                                            dateTextView.text = tmp
-                                            time1TextView.text = time1
-                                            time2TextView.text = time2
-                                            time3TextView.text = time3
-                                            time4TextView.text = time4
-                                            time5TextView.text = time5
-                                        }
                                     }
-                                } else {
-                                    if (languageTextView.text.toString() == "TR") {
-                                        doToast("Veri güncellemesi gerekli, lütfen internete bağlanıp uygulamaya tekrar girin")
-                                    } else {
-                                        doToast("Data update required, please connect to the internet and re-enter the app")
-                                    }
-                                    bufferedReader.close()
-                                    inputStream.close()
-                                    answer = "error"
+
                                 }
-                                //Log.d("Main Activity", "returning $answer")
-                                continuation.resume(answer)
+                                else {
+                                    inputStream = FileInputStream(file)
+                                    bufferedReader =
+                                        BufferedReader(InputStreamReader(inputStream))
+                                    firstLine = bufferedReader.readLine()
+                                    parts = firstLine.split(",")
+                                    date = parts[0]
+                                    time1 = parts[1]
+                                    time2 = parts[2]
+                                    time3 = parts[3]
+                                    time4 = parts[4]
+                                    time5 = parts[5]
+                                    lastPrayerTime = LocalTime.parse(time5, DateTimeFormatter.ofPattern("HH:mm"))
+                                    if (currentTimeParsed.isAfter(lastPrayerTime)) {
+                                        firstLine = bufferedReader.readLine()
+                                        parts = firstLine.split(",")
+                                        val dateParts = parts[0].split("-")
+                                        val tmp =
+                                            dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                                        dateTextView.text = tmp
+                                        time1TextView.text = parts[1]
+                                        time2TextView.text = parts[2]
+                                        time3TextView.text = parts[3]
+                                        time4TextView.text = parts[4]
+                                        time5TextView.text = parts[5]
+                                    }
+                                    else {
+                                        val dateParts = date.split("-")
+                                        val tmp =
+                                            dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                                        dateTextView.text = tmp
+                                        time1TextView.text = time1
+                                        time2TextView.text = time2
+                                        time3TextView.text = time3
+                                        time4TextView.text = time4
+                                        time5TextView.text = time5
+                                    }
+                                }
                             }
-                        }
-                    }
-                    else{
-                        if(currentTimeParsed.isAfter(lastPrayerTime)){
+                            else {
+                                if (languageTextView.text.toString() == "TR") {
+                                    doToast("Veri güncellemesi gerekli, lütfen internete bağlanıp uygulamaya tekrar girin")
+                                } else {
+                                    doToast("Data update required, please connect to the internet and re-enter the app")
+                                }
+
+                                answer = "error"
+                            }
                             bufferedReader.close()
                             inputStream.close()
-                            inputStream = FileInputStream(file)
-                            bufferedReader = BufferedReader(InputStreamReader(inputStream))
-                            firstLine = bufferedReader.readLine()
-                            firstLine = bufferedReader.readLine()
-                            parts = firstLine.split(",")
-                            val dateParts = parts[0].split("-")
-                            val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
-                            dateTextView.text = tmp
-                            time1TextView.text = parts[1]
-                            time2TextView.text = parts[2]
-                            time3TextView.text = parts[3]
-                            time4TextView.text = parts[4]
-                            time5TextView.text = parts[5]
+                            continuation.resume(answer)
                         }
-                        else{
-                            val dateParts = date.split("-")
-                            val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
-                            dateTextView.text = tmp
-                            time1TextView.text = time1
-                            time2TextView.text = time2
-                            time3TextView.text = time3
-                            time4TextView.text = time4
-                            time5TextView.text = time5
-                        }
-                        return "done"
                     }
                 }
                 else{
-                    return "error"
+                    if(currentTimeParsed.isAfter(lastPrayerTime)){
+                        firstLine = withContext(Dispatchers.IO) {
+                            bufferedReader.readLine()
+                        }
+                        parts = firstLine.split(",")
+                        val dateParts = parts[0].split("-")
+                        val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                        dateTextView.text = tmp
+                        time1TextView.text = parts[1]
+                        time2TextView.text = parts[2]
+                        time3TextView.text = parts[3]
+                        time4TextView.text = parts[4]
+                        time5TextView.text = parts[5]
+                    }
+                    else{
+                        val dateParts = date.split("-")
+                        val tmp = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                        dateTextView.text = tmp
+                        time1TextView.text = time1
+                        time2TextView.text = time2
+                        time3TextView.text = time3
+                        time4TextView.text = time4
+                        time5TextView.text = time5
+                    }
+                    bufferedReader.close()
+                    inputStream.close()
+                    return "done"
                 }
             }
-            bufferedReader.close()
-            inputStream.close()
-            return "done"
+            else{
+                bufferedReader.close()
+                inputStream.close()
+                return "error"
+            }
         }
         else{
             return "error"
@@ -898,7 +936,7 @@ class MainActivity : AppCompatActivity() {
                     val body = document.body()
                     val parsedDoc = Jsoup.parse(body.toString())
                     val prayerTimesElement: Element? = parsedDoc.selectFirst("#tab-0 table.vakit-table tbody")
-                    //Log.d("FetchPrayerTimes", "Prayer Times Element found: $prayerTimesElement")
+                    //Log.d("Main Activity", "Prayer Times Element found: $prayerTimesElement")
                     val rows = prayerTimesElement?.select("tr")
                     val prayerTimesStringBuilder = StringBuilder()
                     rows?.forEach { row ->
@@ -919,9 +957,14 @@ class MainActivity : AppCompatActivity() {
                     //Log.e("FetchPrayerTimes", "Error fetching prayer times", e)
                     return@withContext "fetching"
                 }
+                if(prayerTimes.isEmpty()){
+                    return@withContext "error"
+                }
+                else{
+                    createCSVFile(prayerTimes, "$location.csv")
+                    return@withContext "done"
+                }
 
-                createCSVFile(prayerTimes, "$location.csv")
-                return@withContext "done"
             }
             return@withContext "no file"
         }

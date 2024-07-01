@@ -1,9 +1,11 @@
 package com.example.prayertimeremainder
 
 import android.app.AlarmManager
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,10 +14,15 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
+import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import android.os.PowerManager
+import okhttp3.Request
+
 //import android.util.Log
 
 class AlarmReceiver : BroadcastReceiver() {
+    private lateinit var wakeLock: PowerManager.WakeLock
     private var mediaPlayer: MediaPlayer? = null
     private var audioManager: AudioManager? = null
     private var notificationManager: NotificationManager? = null
@@ -25,8 +32,13 @@ class AlarmReceiver : BroadcastReceiver() {
     private var type: String = ""
     private var audio: String = ""
     private var requestCode: Int = 0
+    private var focusReq: AudioFocusRequest? = null
     override fun onReceive(context: Context, intent: Intent) {
         //Log.d("AlarmReceiver", "received")
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag")
+        wakeLock.acquire(10*60*1000L /*10 minutes*/)
+        //Log.d("AlarmReceiver","Wake lock required")
         requestCode = intent.getIntExtra("REQUEST_CODE", 0)
         language = intent.getStringExtra("Language").toString()
         type = intent.getStringExtra("Type").toString()
@@ -46,7 +58,7 @@ class AlarmReceiver : BroadcastReceiver() {
                     .build())
                 .setOnAudioFocusChangeListener(afChangeListener)
                 .build()
-
+            focusReq = focusRequest
             val result = audioManager?.requestAudioFocus(focusRequest)
 
             if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -76,6 +88,8 @@ class AlarmReceiver : BroadcastReceiver() {
                         //Log.d("AlarmReceiver", "MediaPlayer playback completed")
                         mediaPlayer?.release()
                         mediaPlayer = null
+                        //Log.d("AlarmReceiver","Wake lock released")
+                        wakeLock.release()
 
                         audioManager?.abandonAudioFocusRequest(focusRequest)
                         cancelNotification()
@@ -98,8 +112,10 @@ class AlarmReceiver : BroadcastReceiver() {
     private val afChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
-                mediaPlayer?.release()
-                mediaPlayer = null
+                //mediaPlayer?.release()
+                //mediaPlayer = null
+                mediaPlayer?.pause()              // mediaPlayer should be stoppable from notification only
+                mediaPlayer?.start()
             }
         }
     }
@@ -199,5 +215,4 @@ class AlarmReceiver : BroadcastReceiver() {
             mediaPlayer = mp
         }
     }
-
 }
