@@ -272,7 +272,8 @@ class MainActivity : AppCompatActivity() {
 
         if(locationTextView.text.toString() != "Kayıtlı Konum Yok" && locationTextView.text.toString() != "No Saved Location"){
             CoroutineScope(Dispatchers.Main).launch {
-                if(setTimeFields() == "done"){
+                val answer = setTimeFields()
+                if(answer == "done" || answer == "oldData"){
                     setVisibility("VISIBLE")
                 }
                 //Log.d("Main Activity", "returned")
@@ -776,7 +777,7 @@ class MainActivity : AppCompatActivity() {
                 if(currentDateParsed.isAfter(dateParsed)){
                     return suspendCoroutine { continuation ->
                         CoroutineScope(Dispatchers.Main).launch {
-                            val answer: String
+                            var answer: String
                             if (isNetworkConnected()) {
                                 if (languageTextView.text.toString() == "TR"){
                                     doToast("Veriler İşleniyor...")
@@ -792,27 +793,49 @@ class MainActivity : AppCompatActivity() {
                                         inputStream = FileInputStream(file)
                                         bufferedReader =  BufferedReader(InputStreamReader(inputStream))
                                         var line: String
+                                        var temp = ""
                                         line = bufferedReader.readLine()
                                         parts = line.split(",")
                                         var counter = 0
-                                        while(counter < 5 && currentDate != parts[0]){
+                                        while(counter < 6 && currentDate != parts[0]){
+
+                                            temp = line
                                             line = bufferedReader.readLine()
                                             parts = line.split(",")
                                             counter++
                                         }
-                                        //Log.d("Main Activity", line)
-                                        parts = line.split(",")
-                                        date = parts[0]
-                                        time1 = parts[1]
-                                        time2 = parts[2]
-                                        time3 = parts[3]
-                                        time4 = parts[4]
-                                        time5 = parts[5]
-                                        if(languageTextView.text.toString() == "TR"){
-                                            doToast("Verilen güncellenemedi. Lütfen daha sonra tekrar deneyiniz.")
+                                        if(currentDate == parts[0]){
+                                            val dateParts = parts[0].split("-")
+                                            val tmp =
+                                                dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                                            dateTextView.text = tmp
+                                            time1TextView.text = parts[1]
+                                            time2TextView.text = parts[2]
+                                            time3TextView.text = parts[3]
+                                            time4TextView.text = parts[4]
+                                            time5TextView.text = parts[5]
+                                            answer = "done"
                                         }
                                         else{
-                                            doToast("Data can not be updated. Please try again later")
+                                            parts = temp.split(",")
+                                            val dateParts = parts[0].split("-")
+                                            val tmp =
+                                                dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0]
+                                            dateTextView.text = tmp
+                                            time1TextView.text = parts[1]
+                                            time2TextView.text = parts[2]
+                                            time3TextView.text = parts[3]
+                                            time4TextView.text = parts[4]
+                                            time5TextView.text = parts[5]
+                                            answer = "oldData"
+                                        }
+
+
+                                        if(languageTextView.text.toString() == "TR"){
+                                            doToast("Veriler güncellenemedi. Eski veri görüyor olabilirsiniz.")
+                                        }
+                                        else{
+                                            doToast("Data can not be updated. You might be seeing ol data.")
                                         }
                                     }
                                     else{
